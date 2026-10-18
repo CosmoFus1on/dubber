@@ -41,10 +41,10 @@ def make_env(tmp_path, dur=12.0):
     p = Project(source={"video": str(video), "duration": dur, "sample_rate": SR, "language": "en"}, target_language="hi")
     p.speakers["SPEAKER_00"] = Speaker(gender="male", gender_confidence=0.9, ref_clip=None)
     segs = [  # id, start, end, raw tts length
-        (0, 1.0, 2.0, 1.1),   # slightly long: fits within spill (gap to next is 1.0 s, spill capped 0.25)
-        (1, 3.0, 4.0, 1.4),   # needs 1.12x -> within 1.15, no flag
-        (2, 5.0, 6.0, 1.5),   # needs 1.2x -> stretch_over_15
-        (3, 6.5, 7.0, 1.2),   # needs 1.6x -> capped 1.25 + truncated
+        (0, 1.0, 2.0, 1.1),   # slightly long: fits within spill (gap to next is 1.0 s, spill capped at SPILL_MAX_S)
+        (1, 3.0, 4.0, 1.65),  # allowed 1.5 -> needs 1.1x -> within 1.15, no flag
+        (2, 5.0, 6.0, 1.8),   # needs 1.2x -> stretch_over_15
+        (3, 6.5, 7.0, 1.6),   # allowed 1.0 -> needs 1.6x -> capped 1.25 + truncated
         (4, 11.2, 11.8, 0.3), # short: untouched
     ]
     for i, s, e, raw in segs:
@@ -65,7 +65,7 @@ def test_fit_and_mix(tmp_path, monkeypatch):
     fit.run(p, work, opts)
     by = {s.id: s for s in p.segments}
     assert by[0].tts.stretch == 1.0 and not by[0].flags
-    assert 1.1 <= by[1].tts.stretch <= 1.15 and F_STRETCH_15 not in by[1].flags
+    assert 1.05 <= by[1].tts.stretch <= 1.15 and F_STRETCH_15 not in by[1].flags
     assert 1.15 < by[2].tts.stretch <= 1.25 and F_STRETCH_15 in by[2].flags and F_TRUNCATED not in by[2].flags
     assert by[3].tts.stretch == config.STRETCH_HARD and F_TRUNCATED in by[3].flags
     assert by[4].tts.stretch == 1.0
