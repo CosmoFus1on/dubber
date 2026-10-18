@@ -26,3 +26,4 @@ __pycache__/
 demo/*.mp4
 eval/clips/
 bench/out/
+tests/voices/

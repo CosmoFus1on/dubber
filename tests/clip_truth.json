@@ -1,0 +1,108 @@
+{
+ "speakers": [
+  {
+   "id": "A",
+   "gender": "male",
+   "turns": [
+    [
+     1.0,
+     4.262
+    ],
+    [
+     4.662,
+     7.414
+    ],
+    [
+     7.814,
+     10.821
+    ],
+    [
+     23.394,
+     26.029
+    ]
+   ]
+  },
+  {
+   "id": "B",
+   "gender": "female",
+   "turns": [
+    [
+     11.321,
+     14.955
+    ],
+    [
+     15.355,
+     17.654
+    ],
+    [
+     17.654,
+     20.394
+    ],
+    [
+     39.629,
+     43.124
+    ]
+   ]
+  }
+ ],
+ "pause": [
+  20.394,
+  23.394
+ ],
+ "song": [
+  26.829,
+  38.829
+ ],
+ "lines": [
+  {
+   "speaker": "A",
+   "text": "Hey, I was thinking we should finally plan that trip to Portugal.",
+   "start": 1.0,
+   "end": 4.262
+  },
+  {
+   "speaker": "A",
+   "text": "Maybe in the first week of May, when the weather is nice.",
+   "start": 4.662,
+   "end": 7.414
+  },
+  {
+   "speaker": "A",
+   "text": "I have always wanted to ride the old yellow trams through the city.",
+   "start": 7.814,
+   "end": 10.821
+  },
+  {
+   "speaker": "B",
+   "text": "That sounds wonderful, but I need to check my work schedule first.",
+   "start": 11.321,
+   "end": 14.955
+  },
+  {
+   "speaker": "B",
+   "text": "Do you want to start in Lisbon or in Porto?",
+   "start": 15.355,
+   "end": 17.654
+  },
+  {
+   "speaker": "B",
+   "text": "I also heard the food in the north is incredible.",
+   "start": 17.654,
+   "end": 20.394
+  },
+  {
+   "speaker": "A",
+   "text": "Let's start in Lisbon, and then take the train north.",
+   "start": 23.394,
+   "end": 26.029
+  },
+  {
+   "speaker": "B",
+   "text": "Great, I will book the flights tonight, and we can talk more tomorrow.",
+   "start": 39.629,
+   "end": 43.124
+  }
+ ],
+ "duration": 44.124,
+ "song_source": "internet-archive:christmasbells1919"
+}

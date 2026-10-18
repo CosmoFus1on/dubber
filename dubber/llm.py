@@ -119,10 +119,13 @@ class OpenAICompatible(LLMProvider):
         if cache.exists():
             return json.loads(cache.read_text(encoding="utf-8"))["content"]
         last: Optional[LLMError] = None
-        for m in [model, *fallback]:
-            for attempt, delay in enumerate([0, *self.backoff]):
-                if delay:
-                    time.sleep(delay)
+        chain = [model, *[m for m in fallback if m != model]]
+        # Backoff is per round over the whole chain: a rate-limited route costs one request, not 31 s,
+        # and the chain is retried 1,2,4,8,16 s later while quotas reset.
+        for attempt, delay in enumerate([0, *self.backoff]):
+            if delay:
+                time.sleep(delay)
+            for m in chain:
                 try:
                     self.calls += 1
                     content, via = self._post(m, messages, json_mode, temperature, max_tokens)
@@ -135,9 +138,7 @@ class OpenAICompatible(LLMProvider):
                     return content
                 except LLMError as e:
                     last = e
-                    log.info("llm attempt %d on %s failed: %s", attempt + 1, m, e)
-                    if not e.retryable:
-                        break
+                    log.info("llm round %d on %s failed: %s", attempt + 1, m, str(e)[:160])
         raise LLMError(f"all models failed; last error: {last}")
 
 

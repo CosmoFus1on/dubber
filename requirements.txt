@@ -1,0 +1,14 @@
+# torch / torchaudio are installed by setup.ps1 (cu128 or CPU wheels)
+faster-whisper
+nvidia-cudnn-cu12
+demucs
+pyannote.audio
+librosa
+soundfile
+numpy
+sentence-transformers
+inaSpeechSegmenter
+tensorflow-cpu
+piper-tts
+pytest
+huggingface_hub

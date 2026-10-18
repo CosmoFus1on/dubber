@@ -1,0 +1,74 @@
+{
+ "speakers": [
+  {
+   "id": "A",
+   "gender": "male",
+   "turns": [
+    [
+     1.0,
+     4.924
+    ],
+    [
+     5.324,
+     8.343
+    ],
+    [
+     8.743,
+     12.319
+    ],
+    [
+     12.719,
+     15.586
+    ],
+    [
+     15.986,
+     19.806
+    ],
+    [
+     20.206,
+     23.352
+    ]
+   ]
+  }
+ ],
+ "lines": [
+  {
+   "speaker": "A",
+   "text": "Good morning everyone, and welcome to this short update about our travel plans.",
+   "start": 1.0,
+   "end": 4.924
+  },
+  {
+   "speaker": "A",
+   "text": "We will leave on the second of May and return ten days later.",
+   "start": 5.324,
+   "end": 8.343
+  },
+  {
+   "speaker": "A",
+   "text": "The hotel in Lisbon is booked, and the train tickets are almost ready.",
+   "start": 8.743,
+   "end": 12.319
+  },
+  {
+   "speaker": "A",
+   "text": "Please send me your passport details before the end of this week.",
+   "start": 12.719,
+   "end": 15.586
+  },
+  {
+   "speaker": "A",
+   "text": "If anything changes, call me on my phone and I will fix the plan right away.",
+   "start": 15.986,
+   "end": 19.806
+  },
+  {
+   "speaker": "A",
+   "text": "Thank you all for listening, and I look forward to seeing you at the airport.",
+   "start": 20.206,
+   "end": 23.352
+  }
+ ],
+ "duration": 24.352,
+ "song_source": null
+}

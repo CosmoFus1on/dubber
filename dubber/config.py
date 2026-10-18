@@ -17,7 +17,9 @@ def load_env(path: Path = ROOT / ".env") -> None:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            v = v.strip().strip('"').strip("'")
+            if v:  # an empty value must not shadow a real one (and "Bearer " breaks huggingface_hub)
+                os.environ.setdefault(k.strip(), v)
 
 
 load_env()
@@ -27,10 +29,10 @@ LLM_BASE_URL = os.environ.get("DUBBER_LLM_BASE_URL", "http://localhost:31415/v1"
 LLM_KEY = os.environ.get("DUBBER_LLM_KEY", "")
 # One strong open-weight model pinned for translation so style stays consistent across a video.
 # Chosen 2026-10-18 from what the proxy could actually route (Groq/OpenRouter/Google keys configured).
-LLM_MODEL = os.environ.get("DUBBER_LLM_MODEL") or "qwen3.8-27b"
-LLM_FALLBACK_CHAIN = ["gemma-4-31b-it", "gemini-2.5-flash", "auto"]
+LLM_MODEL = os.environ.get("DUBBER_LLM_MODEL") or "nemotron-3-ultra-550b"
+LLM_FALLBACK_CHAIN = ["nemotron-3-super-120b", "qwen3.8-27b", "gemma-4-31b-it", "gemini-2.5-flash", "auto"]
 LLM_FAST = os.environ.get("DUBBER_LLM_FAST") or "auto:fast"   # judge + back-translation
-LLM_FAST_FALLBACK = ["auto", "qwen3.8-27b"]
+LLM_FAST_FALLBACK = ["nemotron-3-super-120b", "auto", "qwen3.8-27b"]
 LLM_TEMPERATURE = 0.3
 LLM_BACKOFF_S = [1, 2, 4, 8, 16]
 LLM_TIMEOUT_S = 120
