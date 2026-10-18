@@ -76,13 +76,14 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
     bg = bg * (1.0 - m) + orig * m
     bg_path = mix_dir / "background.wav"
     audio.write(bg_path, bg, sr)
-    del orig
 
     ducked_path = mix_dir / "background_ducked.wav"
     if voice.any():
         ffmpeg.duck(bg_path, voice_path, ducked_path)
         bg, _ = audio.read(ducked_path, sr=sr, mono=False)
         bg = _fit_length(_stereo(bg), n)
+        bg = bg * (1.0 - m) + orig * m   # music segments are never ducked: original audio, untouched
+    del orig
     mix = bg + voice
     peak = float(np.abs(mix).max()) if len(mix) else 0.0
     if peak > 0.99:

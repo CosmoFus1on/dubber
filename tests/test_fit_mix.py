@@ -44,7 +44,7 @@ def make_env(tmp_path, dur=12.0):
         (0, 1.0, 2.0, 1.1),   # slightly long: fits within spill (gap to next is 1.0 s, spill capped at SPILL_MAX_S)
         (1, 3.0, 4.0, 1.65),  # allowed 1.5 -> needs 1.1x -> within 1.15, no flag
         (2, 5.0, 6.0, 1.8),   # needs 1.2x -> stretch_over_15
-        (3, 6.5, 7.0, 1.6),   # allowed 1.0 -> needs 1.6x -> capped 1.25 + truncated
+        (3, 7.0, 7.5, 1.6),   # allowed 1.0 (next is the song at 8.0) -> needs 1.6x -> capped 1.25 + truncated
         (4, 11.2, 11.8, 0.3), # short: untouched
     ]
     for i, s, e, raw in segs:
