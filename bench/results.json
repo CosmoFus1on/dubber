@@ -1,15 +1,675 @@
 [
  {
+  "engine": "chatterbox",
+  "lang": "hi",
+  "subprocess": true,
+  "load_s": 24.2,
+  "five_wall_s": 40.5,
+  "rtf_audio_s": 20.23,
+  "rtf": 0.805,
+  "err_mean_ms": 1857,
+  "err_max_ms": 5301,
+  "sim": 0.887,
+  "fails": 0,
+  "vram_mb": 4306,
+  "lines": [
+   {
+    "id": 0,
+    "text": "अरे, मैं सोच रहा था कि हम पुर्तगाल की ट्रिप आखिर प्लान करें।",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\hi\\0.wav",
+    "dur": 4.011,
+    "err_ms": 749,
+    "sim": 0.895
+   },
+   {
+    "id": 1,
+    "text": "शायद मई के पहले हफ्ते में, जब मौसम अच्छा हो।",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\hi\\1.wav",
+    "dur": 3.008,
+    "err_ms": 256,
+    "sim": 0.918
+   },
+   {
+    "id": 2,
+    "text": "मैं हमेशा से शहर में पुरानी पीली ट्राम में सफ़र करना चाहता था।",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\hi\\2.wav",
+    "dur": 5.611,
+    "err_ms": 2604,
+    "sim": 0.874
+   },
+   {
+    "id": 3,
+    "text": "यह बहुत अच्छा लगता है, लेकिन मुझे पहले अपना वर्क शेड्यूल चेक करना होगा।",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\hi\\3.wav",
+    "dur": 4.011,
+    "err_ms": 377,
+    "sim": 0.85
+   },
+   {
+    "id": 4,
+    "text": "क्या आप लिस्बन से शुरू करना चाहते हैं या पोर्टो से?",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\hi\\4.wav",
+    "dur": 7.6,
+    "err_ms": 5301,
+    "sim": 0.896
+   }
+  ]
+ },
+ {
+  "engine": "chatterbox",
+  "lang": "ms",
+  "subprocess": true,
+  "load_s": 21.3,
+  "five_wall_s": 33.5,
+  "rtf_audio_s": 12.79,
+  "rtf": 0.953,
+  "err_mean_ms": 661,
+  "err_max_ms": 2182,
+  "sim": 0.893,
+  "fails": 0,
+  "vram_mb": 4126,
+  "lines": [
+   {
+    "id": 0,
+    "text": "Hei, aku fikir kita patut plan trip ke Portugal ni.",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ms\\0.wav",
+    "dur": 3.221,
+    "err_ms": 41,
+    "sim": 0.893
+   },
+   {
+    "id": 1,
+    "text": "Mungkin minggu pertama Mei, cuaca elok.",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ms\\1.wav",
+    "dur": 2.453,
+    "err_ms": 299,
+    "sim": 0.906
+   },
+   {
+    "id": 2,
+    "text": "Aku lama dah nak naik tram kuning tua di bandar.",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ms\\2.wav",
+    "dur": 2.709,
+    "err_ms": 298,
+    "sim": 0.908
+   },
+   {
+    "id": 3,
+    "text": "Kedengar best, tapi aku kena check jadual kerja dulu.",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ms\\3.wav",
+    "dur": 5.816,
+    "err_ms": 2182,
+    "sim": 0.898
+   },
+   {
+    "id": 4,
+    "text": "Nak mula di Lisbon atau Porto?",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ms\\4.wav",
+    "dur": 1.813,
+    "err_ms": 486,
+    "sim": 0.859
+   }
+  ]
+ },
+ {
+  "engine": "chatterbox",
+  "lang": "ja",
+  "subprocess": true,
+  "load_s": 21.8,
+  "five_wall_s": 35.5,
+  "rtf_audio_s": 11.93,
+  "rtf": 1.148,
+  "err_mean_ms": 459,
+  "err_max_ms": 794,
+  "sim": 0.863,
+  "fails": 0,
+  "vram_mb": 4105,
+  "lines": [
+   {
+    "id": 0,
+    "text": "ねえ、ポルトガル旅行、ついに計画しようよ。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ja\\0.wav",
+    "dur": 3.816,
+    "err_ms": 554,
+    "sim": 0.86
+   },
+   {
+    "id": 1,
+    "text": "5月の第一週、天気いい頃にどう？",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ja\\1.wav",
+    "dur": 2.56,
+    "err_ms": 192,
+    "sim": 0.872
+   },
+   {
+    "id": 2,
+    "text": "ずっと、街を黄色い古い路面電車で走りたかった。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ja\\2.wav",
+    "dur": 3.2,
+    "err_ms": 193,
+    "sim": 0.891
+   },
+   {
+    "id": 3,
+    "text": "素敵ね、でもまず仕事の予定を確認しないと。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ja\\3.wav",
+    "dur": 3.072,
+    "err_ms": 562,
+    "sim": 0.89
+   },
+   {
+    "id": 4,
+    "text": "リスボンから？それともポルトから？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\ja\\4.wav",
+    "dur": 3.093,
+    "err_ms": 794,
+    "sim": 0.8
+   }
+  ]
+ },
+ {
+  "engine": "chatterbox",
+  "lang": "zh",
+  "subprocess": true,
+  "load_s": 25.0,
+  "five_wall_s": 40.7,
+  "rtf_audio_s": 23.19,
+  "rtf": 0.679,
+  "err_mean_ms": 2633,
+  "err_max_ms": 8470,
+  "sim": 0.858,
+  "fails": 0,
+  "vram_mb": 4331,
+  "lines": [
+   {
+    "id": 0,
+    "text": "嘿，我想我们该计划去葡萄牙的旅行了。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\zh\\0.wav",
+    "dur": 4.203,
+    "err_ms": 941,
+    "sim": 0.913
+   },
+   {
+    "id": 1,
+    "text": "五月初吧，天气正好。",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\zh\\1.wav",
+    "dur": 2.389,
+    "err_ms": 363,
+    "sim": 0.887
+   },
+   {
+    "id": 2,
+    "text": "我一直想坐老黄电车穿城而过。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\zh\\2.wav",
+    "dur": 11.477,
+    "err_ms": 8470,
+    "sim": 0.757
+   },
+   {
+    "id": 3,
+    "text": "听起来很棒，但我得先查查工作安排。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\zh\\3.wav",
+    "dur": 6.997,
+    "err_ms": 3363,
+    "sim": 0.857
+   },
+   {
+    "id": 4,
+    "text": "想从里斯本还是波尔图出发？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\chatterbox\\zh\\4.wav",
+    "dur": 2.325,
+    "err_ms": 26,
+    "sim": 0.878
+   }
+  ]
+ },
+ {
+  "engine": "xtts",
+  "lang": "hi",
+  "subprocess": true,
+  "load_s": 26.9,
+  "five_wall_s": 31.4,
+  "rtf_audio_s": 21.14,
+  "rtf": 0.212,
+  "err_mean_ms": 2347,
+  "err_max_ms": 2753,
+  "sim": 0.837,
+  "fails": 0,
+  "vram_mb": 2365,
+  "lines": [
+   {
+    "id": 0,
+    "text": "अरे, मैं सोच रहा था कि हम पुर्तगाल की ट्रिप आखिर प्लान करें।",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\xtts\\hi\\0.wav",
+    "dur": 5.547,
+    "err_ms": 2285,
+    "sim": 0.858
+   },
+   {
+    "id": 1,
+    "text": "शायद मई के पहले हफ्ते में, जब मौसम अच्छा हो।",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\xtts\\hi\\1.wav",
+    "dur": 5.184,
+    "err_ms": 2432,
+    "sim": 0.867
+   },
+   {
+    "id": 2,
+    "text": "मैं हमेशा से शहर में पुरानी पीली ट्राम में सफ़र करना चाहता था।",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\xtts\\hi\\2.wav",
+    "dur": 5.76,
+    "err_ms": 2753,
+    "sim": 0.858
+   },
+   {
+    "id": 3,
+    "text": "यह बहुत अच्छा लगता है, लेकिन मुझे पहले अपना वर्क शेड्यूल चेक करना होगा।",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\xtts\\hi\\3.wav",
+    "dur": 5.632,
+    "err_ms": 1998,
+    "sim": 0.811
+   },
+   {
+    "id": 4,
+    "text": "क्या आप लिस्बन से शुरू करना चाहते हैं या पोर्टो से?",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\xtts\\hi\\4.wav",
+    "dur": 4.565,
+    "err_ms": 2266,
+    "sim": 0.792
+   }
+  ]
+ },
+ {
+  "engine": "xtts",
+  "lang": "ja",
+  "subprocess": true,
+  "load_s": 23.4,
+  "five_wall_s": 28.3,
+  "rtf_audio_s": 13.16,
+  "rtf": 0.373,
+  "err_mean_ms": 497,
+  "err_max_ms": 1221,
+  "sim": 0.796,
+  "fails": 0,
+  "vram_mb": 2295,
+  "lines": [
+   {
+    "id": 0,
+    "text": "ねえ、ポルトガル旅行、ついに計画しようよ。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\xtts\\ja\\0.wav",
+    "dur": 2.773,
+    "err_ms": 489,
+    "sim": 0.817
+   },
+   {
+    "id": 1,
+    "text": "5月の第一週、天気いい頃にどう？",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\xtts\\ja\\1.wav",
+    "dur": 2.859,
+    "err_ms": 107,
+    "sim": 0.806
+   },
+   {
+    "id": 2,
+    "text": "ずっと、街を黄色い古い路面電車で走りたかった。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\xtts\\ja\\2.wav",
+    "dur": 3.413,
+    "err_ms": 406,
+    "sim": 0.82
+   },
+   {
+    "id": 3,
+    "text": "素敵ね、でもまず仕事の予定を確認しないと。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\xtts\\ja\\3.wav",
+    "dur": 3.371,
+    "err_ms": 263,
+    "sim": 0.773
+   },
+   {
+    "id": 4,
+    "text": "リスボンから？それともポルトから？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\xtts\\ja\\4.wav",
+    "dur": 3.52,
+    "err_ms": 1221,
+    "sim": 0.764
+   }
+  ]
+ },
+ {
+  "engine": "xtts",
+  "lang": "zh",
+  "subprocess": true,
+  "load_s": 23.5,
+  "five_wall_s": 27.5,
+  "rtf_audio_s": 11.5,
+  "rtf": 0.351,
+  "err_mean_ms": 477,
+  "err_max_ms": 709,
+  "sim": 0.802,
+  "fails": 0,
+  "vram_mb": 2257,
+  "lines": [
+   {
+    "id": 0,
+    "text": "嘿，我想我们该计划去葡萄牙的旅行了。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\xtts\\zh\\0.wav",
+    "dur": 3.691,
+    "err_ms": 429,
+    "sim": 0.828
+   },
+   {
+    "id": 1,
+    "text": "五月初吧，天气正好。",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\xtts\\zh\\1.wav",
+    "dur": 2.091,
+    "err_ms": 661,
+    "sim": 0.792
+   },
+   {
+    "id": 2,
+    "text": "我一直想坐老黄电车穿城而过。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\xtts\\zh\\2.wav",
+    "dur": 3.179,
+    "err_ms": 172,
+    "sim": 0.839
+   },
+   {
+    "id": 3,
+    "text": "听起来很棒，但我得先查查工作安排。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\xtts\\zh\\3.wav",
+    "dur": 3.221,
+    "err_ms": 413,
+    "sim": 0.737
+   },
+   {
+    "id": 4,
+    "text": "想从里斯本还是波尔图出发？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\xtts\\zh\\4.wav",
+    "dur": 3.008,
+    "err_ms": 709,
+    "sim": 0.814
+   }
+  ]
+ },
+ {
+  "engine": "openvoice",
+  "lang": "ja",
+  "subprocess": true,
+  "load_s": 13.4,
+  "five_wall_s": 15.0,
+  "rtf_audio_s": 11.75,
+  "rtf": 0.13,
+  "err_mean_ms": 200,
+  "err_max_ms": 383,
+  "sim": 0.723,
+  "fails": 0,
+  "vram_mb": 907,
+  "lines": [
+   {
+    "id": 0,
+    "text": "ねえ、ポルトガル旅行、ついに計画しようよ。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\ja\\0.wav",
+    "dur": 2.879,
+    "err_ms": 383,
+    "sim": 0.7
+   },
+   {
+    "id": 1,
+    "text": "5月の第一週、天気いい頃にどう？",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\ja\\1.wav",
+    "dur": 2.67,
+    "err_ms": 82,
+    "sim": 0.698
+   },
+   {
+    "id": 2,
+    "text": "ずっと、街を黄色い古い路面電車で走りたかった。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\ja\\2.wav",
+    "dur": 3.344,
+    "err_ms": 337,
+    "sim": 0.686
+   },
+   {
+    "id": 3,
+    "text": "素敵ね、でもまず仕事の予定を確認しないと。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\ja\\3.wav",
+    "dur": 3.483,
+    "err_ms": 151,
+    "sim": 0.818
+   },
+   {
+    "id": 4,
+    "text": "リスボンから？それともポルトから？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\ja\\4.wav",
+    "dur": 2.252,
+    "err_ms": 47,
+    "sim": 0.712
+   }
+  ]
+ },
+ {
+  "engine": "openvoice",
+  "lang": "zh",
+  "subprocess": true,
+  "load_s": 17.5,
+  "five_wall_s": 18.8,
+  "rtf_audio_s": 8.82,
+  "rtf": 0.147,
+  "err_mean_ms": 729,
+  "err_max_ms": 1127,
+  "sim": 0.66,
+  "fails": 0,
+  "vram_mb": 1503,
+  "lines": [
+   {
+    "id": 0,
+    "text": "嘿，我想我们该计划去葡萄牙的旅行了。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\zh\\0.wav",
+    "dur": 2.485,
+    "err_ms": 777,
+    "sim": 0.666
+   },
+   {
+    "id": 1,
+    "text": "五月初吧，天气正好。",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\zh\\1.wav",
+    "dur": 1.625,
+    "err_ms": 1127,
+    "sim": 0.557
+   },
+   {
+    "id": 2,
+    "text": "我一直想坐老黄电车穿城而过。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\zh\\2.wav",
+    "dur": 2.345,
+    "err_ms": 662,
+    "sim": 0.692
+   },
+   {
+    "id": 3,
+    "text": "听起来很棒，但我得先查查工作安排。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\zh\\3.wav",
+    "dur": 2.67,
+    "err_ms": 964,
+    "sim": 0.642
+   },
+   {
+    "id": 4,
+    "text": "想从里斯本还是波尔图出发？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\openvoice\\zh\\4.wav",
+    "dur": 2.183,
+    "err_ms": 116,
+    "sim": 0.742
+   }
+  ]
+ },
+ {
+  "engine": "f5",
+  "lang": "zh",
+  "subprocess": true,
+  "load_s": 18.2,
+  "five_wall_s": 24.7,
+  "rtf_audio_s": 6.59,
+  "rtf": 0.995,
+  "err_mean_ms": 1244,
+  "err_max_ms": 1675,
+  "sim": 0.85,
+  "fails": 0,
+  "vram_mb": 2939,
+  "lines": [
+   {
+    "id": 0,
+    "text": "嘿，我想我们该计划去葡萄牙的旅行了。",
+    "slot": 3.262,
+    "error": null,
+    "wav": "bench\\out\\f5\\zh\\0.wav",
+    "dur": 2.144,
+    "err_ms": 1118,
+    "sim": 0.838
+   },
+   {
+    "id": 1,
+    "text": "五月初吧，天气正好。",
+    "slot": 2.752,
+    "error": null,
+    "wav": "bench\\out\\f5\\zh\\1.wav",
+    "dur": 1.077,
+    "err_ms": 1675,
+    "sim": 0.847
+   },
+   {
+    "id": 2,
+    "text": "我一直想坐老黄电车穿城而过。",
+    "slot": 3.007,
+    "error": null,
+    "wav": "bench\\out\\f5\\zh\\2.wav",
+    "dur": 1.675,
+    "err_ms": 1332,
+    "sim": 0.838
+   },
+   {
+    "id": 3,
+    "text": "听起来很棒，但我得先查查工作安排。",
+    "slot": 3.634,
+    "error": null,
+    "wav": "bench\\out\\f5\\zh\\3.wav",
+    "dur": 2.208,
+    "err_ms": 1426,
+    "sim": 0.879
+   },
+   {
+    "id": 4,
+    "text": "想从里斯本还是波尔图出发？",
+    "slot": 2.299,
+    "error": null,
+    "wav": "bench\\out\\f5\\zh\\4.wav",
+    "dur": 1.632,
+    "err_ms": 667,
+    "sim": 0.85
+   }
+  ]
+ },
+ {
   "engine": "piper",
   "lang": "hi",
   "subprocess": false,
-  "load_s": 0.9,
-  "five_wall_s": 2.7,
-  "rtf_audio_s": 21.64,
-  "rtf": 0.126,
-  "err_mean_ms": 1337,
-  "err_max_ms": 2380,
-  "sim": 0.633,
+  "load_s": 0.8,
+  "five_wall_s": 2.3,
+  "rtf_audio_s": 21.97,
+  "rtf": 0.105,
+  "err_mean_ms": 1403,
+  "err_max_ms": 2264,
+  "sim": 0.637,
   "fails": 0,
   "vram_mb": 0,
   "lines": [
@@ -21,7 +681,7 @@
     "wav": "bench\\out\\piper\\hi\\0.wav",
     "dur": 4.342,
     "err_ms": 1080,
-    "sim": 0.654
+    "sim": 0.658
    },
    {
     "id": 1,
@@ -29,9 +689,9 @@
     "slot": 2.752,
     "error": null,
     "wav": "bench\\out\\piper\\hi\\1.wav",
-    "dur": 3.297,
-    "err_ms": 545,
-    "sim": 0.706
+    "dur": 3.437,
+    "err_ms": 685,
+    "sim": 0.701
    },
    {
     "id": 2,
@@ -39,9 +699,9 @@
     "slot": 3.007,
     "error": null,
     "wav": "bench\\out\\piper\\hi\\2.wav",
-    "dur": 4.226,
-    "err_ms": 1219,
-    "sim": 0.619
+    "dur": 4.412,
+    "err_ms": 1405,
+    "sim": 0.627
    },
    {
     "id": 3,
@@ -49,9 +709,9 @@
     "slot": 3.634,
     "error": null,
     "wav": "bench\\out\\piper\\hi\\3.wav",
-    "dur": 6.014,
-    "err_ms": 2380,
-    "sim": 0.624
+    "dur": 5.898,
+    "err_ms": 2264,
+    "sim": 0.622
    },
    {
     "id": 4,
@@ -59,9 +719,9 @@
     "slot": 2.299,
     "error": null,
     "wav": "bench\\out\\piper\\hi\\4.wav",
-    "dur": 3.762,
-    "err_ms": 1463,
-    "sim": 0.563
+    "dur": 3.878,
+    "err_ms": 1579,
+    "sim": 0.577
    }
   ]
  },
@@ -70,12 +730,12 @@
   "lang": "ja",
   "subprocess": false,
   "load_s": 1.0,
-  "five_wall_s": 1.3,
-  "rtf_audio_s": 16.51,
-  "rtf": 0.082,
-  "err_mean_ms": 311,
-  "err_max_ms": 569,
-  "sim": 0.545,
+  "five_wall_s": 1.4,
+  "rtf_audio_s": 16.11,
+  "rtf": 0.085,
+  "err_mean_ms": 246,
+  "err_max_ms": 615,
+  "sim": 0.537,
   "fails": 0,
   "vram_mb": 0,
   "lines": [
@@ -85,9 +745,9 @@
     "slot": 3.262,
     "error": null,
     "wav": "bench\\out\\piper\\ja\\0.wav",
-    "dur": 3.576,
-    "err_ms": 314,
-    "sim": 0.552
+    "dur": 3.228,
+    "err_ms": 34,
+    "sim": 0.534
    },
    {
     "id": 1,
@@ -95,9 +755,9 @@
     "slot": 2.752,
     "error": null,
     "wav": "bench\\out\\piper\\ja\\1.wav",
-    "dur": 2.81,
-    "err_ms": 58,
-    "sim": 0.492
+    "dur": 2.949,
+    "err_ms": 197,
+    "sim": 0.524
    },
    {
     "id": 2,
@@ -105,9 +765,9 @@
     "slot": 3.007,
     "error": null,
     "wav": "bench\\out\\piper\\ja\\2.wav",
-    "dur": 3.576,
-    "err_ms": 569,
-    "sim": 0.573
+    "dur": 3.622,
+    "err_ms": 615,
+    "sim": 0.512
    },
    {
     "id": 3,
@@ -115,9 +775,9 @@
     "slot": 3.634,
     "error": null,
     "wav": "bench\\out\\piper\\ja\\3.wav",
-    "dur": 3.947,
-    "err_ms": 313,
-    "sim": 0.559
+    "dur": 3.808,
+    "err_ms": 174,
+    "sim": 0.554
    },
    {
     "id": 4,
@@ -125,9 +785,9 @@
     "slot": 2.299,
     "error": null,
     "wav": "bench\\out\\piper\\ja\\4.wav",
-    "dur": 2.601,
-    "err_ms": 302,
-    "sim": 0.548
+    "dur": 2.508,
+    "err_ms": 209,
+    "sim": 0.561
    }
   ]
  },
@@ -135,13 +795,13 @@
   "engine": "piper",
   "lang": "zh",
   "subprocess": false,
-  "load_s": 4.7,
-  "five_wall_s": 4.4,
-  "rtf_audio_s": 14.68,
-  "rtf": 0.299,
-  "err_mean_ms": 427,
-  "err_max_ms": 708,
-  "sim": 0.532,
+  "load_s": 4.3,
+  "five_wall_s": 3.9,
+  "rtf_audio_s": 14.54,
+  "rtf": 0.268,
+  "err_mean_ms": 400,
+  "err_max_ms": 615,
+  "sim": 0.548,
   "fails": 0,
   "vram_mb": 0,
   "lines": [
@@ -151,9 +811,9 @@
     "slot": 3.262,
     "error": null,
     "wav": "bench\\out\\piper\\zh\\0.wav",
-    "dur": 3.738,
-    "err_ms": 476,
-    "sim": 0.571
+    "dur": 3.692,
+    "err_ms": 430,
+    "sim": 0.628
    },
    {
     "id": 1,
@@ -161,9 +821,9 @@
     "slot": 2.752,
     "error": null,
     "wav": "bench\\out\\piper\\zh\\1.wav",
-    "dur": 2.252,
-    "err_ms": 500,
-    "sim": 0.507
+    "dur": 2.159,
+    "err_ms": 593,
+    "sim": 0.537
    },
    {
     "id": 2,
@@ -171,9 +831,9 @@
     "slot": 3.007,
     "error": null,
     "wav": "bench\\out\\piper\\zh\\2.wav",
-    "dur": 3.019,
-    "err_ms": 12,
-    "sim": 0.583
+    "dur": 3.065,
+    "err_ms": 58,
+    "sim": 0.568
    },
    {
     "id": 3,
@@ -181,9 +841,9 @@
     "slot": 3.634,
     "error": null,
     "wav": "bench\\out\\piper\\zh\\3.wav",
-    "dur": 2.926,
-    "err_ms": 708,
-    "sim": 0.493
+    "dur": 3.019,
+    "err_ms": 615,
+    "sim": 0.487
    },
    {
     "id": 4,
@@ -191,9 +851,9 @@
     "slot": 2.299,
     "error": null,
     "wav": "bench\\out\\piper\\zh\\4.wav",
-    "dur": 2.74,
-    "err_ms": 441,
-    "sim": 0.505
+    "dur": 2.601,
+    "err_ms": 302,
+    "sim": 0.521
    }
   ]
  }

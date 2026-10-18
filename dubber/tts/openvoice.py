@@ -40,13 +40,18 @@ class OpenVoice(TTSEngine):
         import torch
         from huggingface_hub import snapshot_download
         from melo.api import TTS
-        from openvoice.api import ToneColorConverter
+        from openvoice.api import OpenVoiceBaseClass, ToneColorConverter
 
         if device == "cuda" and not torch.cuda.is_available():
             device = "cpu"
         snapshot_download("myshell-ai/OpenVoiceV2", local_dir=str(CKPT),
                           allow_patterns=["converter/*", "base_speakers/ses/*.pth"])
-        conv = ToneColorConverter(str(CKPT / "converter" / "config.json"), device=device, enable_watermark=False)
+        # Upstream bug: ToneColorConverter(enable_watermark=False) forwards the kwarg to the base class and
+        # raises, so build it without its __init__ (which only adds wavmark).
+        conv = ToneColorConverter.__new__(ToneColorConverter)
+        OpenVoiceBaseClass.__init__(conv, str(CKPT / "converter" / "config.json"), device=device)
+        conv.watermark_model = None
+        conv.version = getattr(conv.hps, "_version_", "v1")
         conv.load_ckpt(str(CKPT / "converter" / "checkpoint.pth"))
         melo: dict[str, TTS] = {}
         tgt_se: dict[str, object] = {}

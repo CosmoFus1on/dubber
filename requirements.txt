@@ -9,6 +9,7 @@ numpy
 sentence-transformers
 inaSpeechSegmenter
 tensorflow-cpu
-piper-tts
+piper-tts[zh,ja]
+webrtcvad-wheels
 pytest
 huggingface_hub

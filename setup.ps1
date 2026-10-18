@@ -1,7 +1,7 @@
 # dubber setup (Windows PowerShell 5.1). Idempotent: safe to re-run.
 #   .\setup.ps1                       main venv, GPU torch
 #   .\setup.ps1 -Cpu                  CPU-only torch
-#   .\setup.ps1 -Engines chatterbox,xtts,openvoice,f5,piper   also create envs\<engine> venvs
+#   .\setup.ps1 -Engines chatterbox,xtts,openvoice,f5   also create envs\<engine> venvs
 param(
     [switch]$Cpu,
     [string[]]$Engines = @()
@@ -21,17 +21,25 @@ function Run-Native {
 }
 
 # ---- engine venvs: one obvious place to adjust per-engine installs ----
-# Each value is a list of pip argument lists (one pip call per entry).
+# Each value is a list of argument lists for envs\<engine>\Scripts\python.exe (one call per entry).
+# torch 2.8.0 for xtts/openvoice/f5: torch 2.9+ routes torchaudio through torchcodec, which needs a shared
+# FFmpeg build (the usual winget/gyan.dev build is static). Piper runs in the main venv (requirements.txt).
+$Cu128 = "https://download.pytorch.org/whl/cu128"
 $EngineSpecs = @{
-    "chatterbox" = @(, @("chatterbox-tts", "--extra-index-url", "https://download.pytorch.org/whl/cu126"))  # pins torch 2.6.0
+    "chatterbox" = @(, @("-m", "pip", "install", "chatterbox-tts", "--extra-index-url", "https://download.pytorch.org/whl/cu126"))  # pins torch 2.6.0
     "xtts"       = @(
-        @("torch", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu128"),
-        @("coqui-tts"))
+        @("-m", "pip", "install", "torch==2.8.0", "torchaudio==2.8.0", "--index-url", $Cu128),
+        @("-m", "pip", "install", "coqui-tts[ja,zh,ko]==0.27.5", "transformers>=4.57,<5"))  # 0.27.5 breaks on transformers 5
     "openvoice"  = @(
-        @("git+https://github.com/myshell-ai/OpenVoice.git"),
-        @("git+https://github.com/myshell-ai/MeloTTS.git"))
-    "f5"         = @(, @("f5-tts"))
-    "piper"      = @(, @("piper-tts"))
+        @("-m", "pip", "install", "torch==2.8.0", "torchaudio==2.8.0", "--index-url", $Cu128),
+        @("-m", "pip", "install", "git+https://github.com/myshell-ai/MeloTTS.git"),
+        @("-m", "pip", "install", "--no-deps", "git+https://github.com/myshell-ai/OpenVoice.git"),  # its own pins are stale; Melo brings what it needs
+        @("-m", "unidic", "download"),
+        @("-c", "import nltk, sys; [nltk.download(r, download_dir=sys.prefix + '/nltk_data', quiet=True) for r in ('averaged_perceptron_tagger_eng', 'cmudict')]"))
+    "f5"         = @(
+        @("-m", "pip", "install", "torch==2.8.0", "torchaudio==2.8.0", "--index-url", $Cu128),
+        @("-m", "pip", "install", "f5-tts"),
+        @("-m", "pip", "uninstall", "-y", "torchcodec"))  # f5-tts pulls a torchcodec built for newer torch; transformers then falls back to the ffmpeg CLI
 }
 
 # ---- main venv ----
@@ -49,6 +57,7 @@ if ($Cpu) {
 }
 Run-Native $VenvPy @("-m", "pip", "install", "-r", "requirements.txt")
 Run-Native $VenvPy @("-m", "pip", "install", "nvidia-cudnn-cu12")
+Run-Native $VenvPy @("-m", "pip", "install", "--no-deps", "resemblyzer")  # bench only; its deps would pull the py2 `typing` backport and a webrtcvad sdist
 
 # ---- Piper test voices ----
 $Voices = Join-Path $PSScriptRoot "tests\voices"
@@ -66,7 +75,7 @@ foreach ($e in $Engines) {
     }
     Run-Native $epy @("-m", "pip", "install", "--upgrade", "pip")
     foreach ($spec in $EngineSpecs[$e]) {
-        Run-Native $epy (@("-m", "pip", "install") + $spec)
+        Run-Native $epy $spec
     }
 }
 

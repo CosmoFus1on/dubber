@@ -10,6 +10,7 @@ its dependency pins conflict with the main venv); otherwise it runs in-process.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 import logging
 import os
