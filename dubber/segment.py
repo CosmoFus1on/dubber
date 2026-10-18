@@ -7,10 +7,11 @@ import re
 from pathlib import Path
 
 from . import config
-from .schema import MUSIC, SPEECH, Segment, Word
+from .schema import F_OVERLAP, MUSIC, SPEECH, Segment, Word
 
 log = logging.getLogger("dubber.segment")
 _END = re.compile(r"[.!?。！？…]$")
+_SENT = re.compile(r"[.!?。！？]$")
 
 
 def detect_music(segment, project, work) -> bool:
@@ -36,7 +37,10 @@ def build(transcript: dict, turns: list, speakers: dict) -> list[Segment]:
     cur_spk = None
     for w in words:
         spk = _speaker_at((w.s + w.e) / 2, turns) if turns else "SPEAKER_00"
-        if cur and (spk != cur_spk or w.s - cur[-1].e > config.MERGE_PAUSE_S):
+        gap = w.s - cur[-1].e if cur else 0.0
+        sentence = (cur and _SENT.search(cur[-1].w.strip()) and gap >= config.SENTENCE_GAP_S
+                    and cur[-1].e - cur[0].s >= config.SENTENCE_MIN_S)
+        if cur and (spk != cur_spk or gap > config.MERGE_PAUSE_S or sentence):
             groups.append((cur_spk, cur))
             cur = []
         if cur and w.e - cur[0].s > config.SEGMENT_CAP_S:
@@ -65,12 +69,26 @@ def build(transcript: dict, turns: list, speakers: dict) -> list[Segment]:
     return out
 
 
+def flag_overlaps(segs: list[Segment], turns: list) -> None:
+    """Flag segments that another speaker's (non-exclusive) turn overlaps by more than OVERLAP_MIN_S."""
+    for seg in segs:
+        ov: dict = {}
+        for u in turns:
+            if u["speaker"] != seg.speaker:
+                ov[u["speaker"]] = ov.get(u["speaker"], 0.0) + max(0.0, min(seg.end, u["end"]) - max(seg.start, u["start"]))
+        other = max(ov, key=ov.get) if ov else None
+        if other and ov[other] > config.OVERLAP_MIN_S:
+            seg.flag(F_OVERLAP)
+            seg.extra["overlaps_with"] = other
+
+
 def run(project, work, opts) -> None:
     work = Path(work)
     transcript = json.loads((work / "transcript.json").read_text(encoding="utf-8"))
-    turns = json.loads((work / "diarization.json").read_text(encoding="utf-8"))["exclusive"]
-    segs = build(transcript, turns, project.speakers)
+    dia = json.loads((work / "diarization.json").read_text(encoding="utf-8"))
+    segs = build(transcript, dia["exclusive"], project.speakers)
+    flag_overlaps(segs, dia["turns"])
     for s in segs:
         s.type = MUSIC if detect_music(s, project, work) else SPEECH
     project.segments = segs
-    log.info("%d segments", len(segs))
+    log.info("%d segments, %d overlapping", len(segs), sum(F_OVERLAP in s.flags for s in segs))

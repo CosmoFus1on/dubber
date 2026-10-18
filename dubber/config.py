@@ -50,6 +50,9 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "")
 MERGE_PAUSE_S = 0.6
 SEGMENT_CAP_S = 12.0
 MUSIC_VOTES_NEEDED = 2          # of 3 detectors
+SENTENCE_GAP_S = 0.15           # split after sentence punctuation when the gap is at least this (whisper reports real 0.4 s pauses as 0.20-0.28 s)
+SENTENCE_MIN_S = 4.0            # ... and the running segment is already this long
+OVERLAP_MIN_S = 0.3             # another speaker's turn overlapping a segment by more than this flags it
 
 # ---- speakers ----
 REF_CLIP_MIN_S = 10.0
@@ -61,7 +64,7 @@ F0_MALE_MAX_HZ = 165.0          # ponytail: single F0 threshold; a logistic fit 
 # ponytail: chars/s table; per-language syllable counting is the upgrade path.
 CPS = {
     "en": 15, "es": 16, "de": 14, "fr": 15, "it": 15, "pt": 15, "nl": 14, "pl": 13, "ru": 13, "tr": 14,
-    "sv": 14, "da": 14, "no": 14, "fi": 13, "el": 13, "he": 11, "ar": 12, "hi": 13, "ms": 15, "sw": 14,
+    "sv": 14, "da": 14, "no": 14, "fi": 13, "el": 13, "he": 11, "ar": 12, "hi": 15, "ms": 15, "sw": 14,
     "ja": 7, "zh": 5.5, "ko": 9,
 }
 CPS_DEFAULT = 13
@@ -81,7 +84,8 @@ VERIFY_MAX_ATTEMPTS = 3
 SHORTEN_ROUNDS = 2
 STRETCH_SOFT = 1.15
 STRETCH_HARD = 1.25
-SPILL_MAX_S = 0.25
+SPILL_MAX_S = 0.5               # a clip may run this far into the silence after its slot, never into the next segment
+BABBLE_RATIO = 2.0              # TTS clip longer than text-length-implies * this -> re-synthesize once
 FADE_MS = 40
 
 # ---- mix ----

@@ -68,10 +68,16 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
                                ref_wav=str(ref) if ref else None, gender=s.gender, **h))
         log.info("engine %s: %d segments", engine, len(jobs))
         results = {r.id: r for r in run_engine(engine, jobs, opts.device)}
+        # Engines babble on very short text now and then; one retry fixes most of it.
+        retry = [j for j in jobs if _babbled(results.get(j.id), j)]
+        if retry:
+            log.info("engine %s: re-synthesizing %d implausibly slow clip(s)", engine, len(retry))
+            results.update({r.id: r for r in run_engine(engine, retry, opts.device)})
         still = []
         for s in pending:
             r = results.get(str(s.id))
             if r and r.wav and Path(r.wav).exists():
+                trim_silence(Path(r.wav))
                 s.tts.engine = engine
                 s.tts.wav = str(Path(r.wav).relative_to(work.resolve())) if Path(r.wav).is_relative_to(work.resolve()) else r.wav
                 s.tts.raw_duration = round(audio.duration(r.wav), 3)
@@ -90,6 +96,27 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
     for s in pending:
         log.error("segment %d: every engine failed; it will be left silent", s.id)
         s.flag("tts_failed")
+
+
+def trim_silence(wav: Path, top_db: float = 35.0, keep_s: float = 0.05) -> float:
+    """Trim leading/trailing silence in place (keeping a short margin). Returns the new duration."""
+    import librosa
+    x, sr = audio.read(wav)
+    mono = x if x.ndim == 1 else x.mean(axis=1)
+    _, (a, b) = librosa.effects.trim(mono, top_db=top_db)
+    k = int(keep_s * sr)
+    a, b = max(0, a - k), min(len(x), b + k)
+    if b - a < len(x):
+        audio.write(wav, x[a:b], sr)
+    return (b - a) / sr
+
+
+def _babbled(r, job: TTSJob) -> bool:
+    """True when the clip is far longer than the text could take (engine hallucination)."""
+    if not r or not r.wav or not Path(r.wav).exists():
+        return False
+    expect = len(job.text) / max(config.cps(job.lang), 1.0)
+    return trim_silence(Path(r.wav)) > max(1.5, expect * config.BABBLE_RATIO)
 
 
 def tts_key(s: Segment, engine: str, project: Project, work: Path, hints: dict) -> str:
