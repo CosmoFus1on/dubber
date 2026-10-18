@@ -1,0 +1,28 @@
+# secrets
+.env
+# runtime artefacts
+work/
+out/
+*.wav
+*.mp4
+*.mp3
+*.flac
+!tests/fixtures/**
+# environments
+.venv/
+envs/
+# caches / models
+.cache/
+models/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.safetensors
+__pycache__/
+*.pyc
+.pytest_cache/
+# demo material lives on HF / releases, not in git
+demo/*.mp4
+eval/clips/
+bench/out/

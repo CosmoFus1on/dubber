@@ -1,0 +1,128 @@
+"""All tunables in one place. Env overrides come from .env (loaded here) or the process environment."""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_env(path: Path = ROOT / ".env") -> None:
+    """Minimal .env loader (KEY=VALUE lines). Values are never logged."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+load_env()
+
+# ---- LLM (FreeLLMAPI or any OpenAI-compatible /v1) ----
+LLM_BASE_URL = os.environ.get("DUBBER_LLM_BASE_URL", "http://localhost:31415/v1")
+LLM_KEY = os.environ.get("DUBBER_LLM_KEY", "")
+# One strong open-weight model pinned for translation so style stays consistent across a video.
+# Chosen 2026-10-18 from what the proxy could actually route (Groq/OpenRouter/Google keys configured).
+LLM_MODEL = os.environ.get("DUBBER_LLM_MODEL") or "qwen3.8-27b"
+LLM_FALLBACK_CHAIN = ["gemma-4-31b-it", "gemini-2.5-flash", "auto"]
+LLM_FAST = os.environ.get("DUBBER_LLM_FAST") or "auto:fast"   # judge + back-translation
+LLM_FAST_FALLBACK = ["auto", "qwen3.8-27b"]
+LLM_TEMPERATURE = 0.3
+LLM_BACKOFF_S = [1, 2, 4, 8, 16]
+LLM_TIMEOUT_S = 120
+CACHE_DIR = Path(os.environ.get("DUBBER_CACHE", Path.home() / ".cache" / "dubber"))
+
+# ---- models ----
+WHISPER_GPU = "large-v3"
+WHISPER_CPU = "distil-large-v3"
+DEMUCS_MODEL = "htdemucs"
+DIARIZATION_MODEL = "pyannote/speaker-diarization-community-1"
+EMBEDDER = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+# ---- segmentation ----
+MERGE_PAUSE_S = 0.6
+SEGMENT_CAP_S = 12.0
+MUSIC_VOTES_NEEDED = 2          # of 3 detectors
+
+# ---- speakers ----
+REF_CLIP_MIN_S = 10.0
+REF_CLIP_MAX_S = 30.0
+GENDER_CONF_MIN = 0.6
+F0_MALE_MAX_HZ = 165.0          # ponytail: single F0 threshold; a logistic fit on (F0, ina ratio) is the upgrade
+
+# ---- translation budget: characters per second of speech, per target language ----
+# ponytail: chars/s table; per-language syllable counting is the upgrade path.
+CPS = {
+    "en": 15, "es": 16, "de": 14, "fr": 15, "it": 15, "pt": 15, "nl": 14, "pl": 13, "ru": 13, "tr": 14,
+    "sv": 14, "da": 14, "no": 14, "fi": 13, "el": 13, "he": 11, "ar": 12, "hi": 13, "ms": 15, "sw": 14,
+    "ja": 7, "zh": 5.5, "ko": 9,
+}
+CPS_DEFAULT = 13
+BUDGET_FACTOR = 0.92
+TRANSLATE_WINDOW = 20           # segments per LLM request
+CONTEXT_FULL_MAX = 600          # above this, send +/- CONTEXT_HALF segments instead of the full transcript
+CONTEXT_HALF = 40
+
+# ---- verification ----
+JUDGE_MIN = 0.7
+SIM_MIN = 0.75
+VERIFY_MAX_ATTEMPTS = 3
+
+# ---- timing fit ----
+SHORTEN_ROUNDS = 2
+STRETCH_SOFT = 1.15
+STRETCH_HARD = 1.25
+SPILL_MAX_S = 0.25
+FADE_MS = 40
+
+# ---- mix ----
+DUCK_DB = -6.0
+TARGET_LUFS = -16.0
+MUSIC_XFADE_MS = 50
+LENGTH_TOLERANCE_S = 0.020
+MIX_SR = 48000
+
+# ---- TTS ----
+# Per-language engine preference. Only engines that list the language are tried; "piper" never clones.
+TTS_FALLBACK = {
+    "hi": ["chatterbox", "xtts", "piper"],
+    "ms": ["chatterbox"],
+    "zh": ["chatterbox", "xtts", "openvoice", "f5", "piper"],
+    "ja": ["chatterbox", "xtts", "openvoice", "piper"],
+    "en": ["chatterbox", "xtts", "openvoice", "f5", "piper"],
+}
+TTS_DEFAULT_CHAIN = ["chatterbox", "xtts", "openvoice", "piper"]
+TTS_CPU_CHAIN = ["piper", "chatterbox"]
+ENGINE_VENVS = ROOT / "envs"    # envs/<engine>/Scripts/python.exe when an engine needs its own pins
+
+# ---- language aliases (whisper/pyannote codes vs engine codes) ----
+LANG_ALIASES = {"zh-cn": "zh", "zh-tw": "zh", "cmn": "zh", "pt-br": "pt", "jw": "jv"}
+
+
+@dataclass
+class Options:
+    """Per-run options; built by the CLI and passed to every stage's run(project, work, opts)."""
+    video: Path
+    target: str                       # normalized 2-letter target language
+    out: Path
+    work: Path                        # work/<stem>
+    device: str = "cuda"              # "cuda" or "cpu"
+    cpu: bool = False
+    keep_original_audio: bool = False
+    glossary: Optional[Path] = None   # text file, one term per line ("Term" or "Term=Translation")
+    num_speakers: Optional[int] = None
+    demo_fast: bool = False           # hosted demo: 1 verify attempt, no shorten rounds
+
+
+def norm_lang(code: str) -> str:
+    code = (code or "").lower().replace("_", "-")
+    return LANG_ALIASES.get(code, code.split("-")[0])
+
+
+def cps(lang: str) -> float:
+    return CPS.get(norm_lang(lang), CPS_DEFAULT)
