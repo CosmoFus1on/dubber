@@ -15,16 +15,19 @@ import numpy as np
 
 from . import audio, config, ffmpeg, synth
 from .llm import default_provider
-from .schema import F_STRETCH_15, F_TRUNCATED, SPEECH, Project, Segment, sha1
-from .translate import Translator, shorten
+from .schema import F_STRETCH_15, F_TRUNCATED, SPEECH, Project, Segment, Verify, sha1
+from .translate import Translator, hand_edited, shorten
 
 log = logging.getLogger("dubber.fit")
 
 
 def allowed_length(project: Project, seg: Segment) -> float:
     nxt = project.next_start_after(seg)
+    end = project.source.get("duration")
     gap = (nxt - seg.end) if nxt is not None else config.SPILL_MAX_S
-    return seg.duration + max(0.0, min(config.SPILL_MAX_S, gap))
+    if end:
+        gap = min(gap, end - seg.end)  # never past the end of the video
+    return max(0.05, seg.duration + max(0.0, min(config.SPILL_MAX_S, gap)))
 
 
 def trim_with_fade(src: Path, dst: Path, seconds: float) -> None:
@@ -66,7 +69,7 @@ def fit_audio(project: Project, seg: Segment, work: Path) -> None:
     else:
         shutil.copyfile(raw_path, out)
     seg.tts.stretch = round(tempo, 3)
-    seg.tts.fitted_wav = str(out.relative_to(work))
+    seg.tts.fitted_wav = out.relative_to(work).as_posix()
     seg.extra["fit_key"] = fit_key(seg, allowed, raw_path)
 
 
@@ -84,22 +87,31 @@ def shorten_rounds(project: Project, todo: list[Segment], work: Path, opts: conf
     for rnd in range(1, max_rounds + 1):
         changed = []
         for s in todo:
+            if hand_edited(s) or not s.translation or not s.tts.wav:
+                continue  # a human's text is never shortened; it goes to tempo/truncate
             allowed, raw = allowed_length(project, s), audio.duration(work / s.tts.wav)
-            if raw <= allowed or not s.translation:
+            if raw <= allowed:
                 continue
-            target = max(4, math.floor(len(s.translation) * allowed / raw * 0.95))
+            target = max(4, math.floor(len(s.translation) * allowed / raw))
             new = shorten(llm, s, src_lang, opts.target, target)
-            if new:
-                log.info("segment %d round %d: shortened %d -> %d chars (raw %.2fs > allowed %.2fs)",
-                         s.id, rnd, len(s.translation), len(new), raw, allowed)
-                s.translation, s.verify.passed, s.tts.shorten_rounds = new, None, rnd
-                changed.append(s)
+            if not new:
+                continue
+            prev = (s.translation, s.verify)
+            s.translation, s.verify = new, Verify()
+            # judge the shorter line BEFORE spending TTS on it; never let verify re-translate here (that
+            # would desync audio and text). A rejected shortening is simply reverted.
+            if translator is not None and not translator.verify(s, retranslate=False):
+                log.info("segment %d round %d: shortened line rejected by the judge (%s); keeping previous",
+                         s.id, rnd, s.verify.issue)
+                s.translation, s.verify = prev
+                continue
+            log.info("segment %d round %d: shortened %d -> %d chars (raw %.2fs > allowed %.2fs)",
+                     s.id, rnd, len(prev[0]), len(new), raw, allowed)
+            s.tts.shorten_rounds = rnd
+            changed.append(s)
         if not changed:
             return
         synth.synthesize(changed, project, work, opts)
-        if translator is not None:
-            for s in changed:
-                translator.verify(s)
         project.save(work / "segments.json")
 
 
@@ -109,7 +121,8 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
         if s.type != SPEECH or not s.tts.wav or not (work / s.tts.wav).exists():
             continue
         fitted = work / s.tts.fitted_wav if s.tts.fitted_wav else None
-        if fitted and fitted.exists() and s.extra.get("fit_key") == fit_key(s, allowed_length(project, s), work / s.tts.wav):
+        if (not opts.force and fitted and fitted.exists()
+                and s.extra.get("fit_key") == fit_key(s, allowed_length(project, s), work / s.tts.wav)):
             continue
         todo.append(s)
     log.info("fit: %d/%d segments to fit", len(todo), len(project.speech()))

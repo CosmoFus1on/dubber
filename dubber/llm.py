@@ -20,7 +20,8 @@ from . import config
 from .schema import sha1
 
 log = logging.getLogger("dubber.llm")
-_THINK = re.compile(r"<think>.*?</think>\s*", re.S)
+_THINK = re.compile(r"<(think|thinking)>.*?(</\1>|$)\s*", re.S)  # an unclosed tag means the answer was cut off
+STATS = {"calls": 0}  # network calls made in this process, for report.json
 
 
 class LLMError(RuntimeError):
@@ -117,17 +118,28 @@ class OpenAICompatible(LLMProvider):
             return json.loads(cache.read_text(encoding="utf-8"))["content"]
         last: Optional[LLMError] = None
         chain = [model, *[m for m in fallback if m != model]]
+        dead: set[str] = set()  # models that answered with a non-retryable error (400, 401 ...)
         # Backoff is per round over the whole chain: a rate-limited route costs one request, not 31 s,
         # and the chain is retried 1,2,4,8,16 s later while quotas reset.
         for attempt, delay in enumerate([0, *self.backoff]):
+            if len(dead) == len(chain):
+                break
             if delay:
                 time.sleep(delay)
             for m in chain:
+                if m in dead:
+                    continue
                 try:
                     self.calls += 1
+                    STATS["calls"] += 1
                     content, via = self._post(m, messages, json_mode, temperature, max_tokens)
                     if not content:
                         raise LLMError(f"{m}: empty content", retryable=True)
+                    if json_mode:
+                        try:
+                            parse_json(content)  # never cache an answer the caller cannot use
+                        except LLMError as e:
+                            raise LLMError(f"{m}: {e}", retryable=True)
                     cache.write_text(json.dumps({"content": content, "model": m, "via": via}, ensure_ascii=False),
                                      encoding="utf-8")
                     if m != model:
@@ -135,6 +147,8 @@ class OpenAICompatible(LLMProvider):
                     return content
                 except LLMError as e:
                     last = e
+                    if not e.retryable:
+                        dead.add(m)
                     log.info("llm round %d on %s failed: %s", attempt + 1, m, str(e)[:160])
         raise LLMError(f"all models failed; last error: {last}")
 

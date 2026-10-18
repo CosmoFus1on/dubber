@@ -23,6 +23,7 @@ F_TRUNCATED = "truncated"
 F_NO_REF = "no_ref_clip"
 F_OVERLAP = "overlap"
 F_TTS_FALLBACK = "tts_fallback:"  # + engine name
+F_TTS_FAILED = "tts_failed"
 
 
 def sha1(*parts: Any) -> str:
@@ -150,7 +151,8 @@ class Project:
 
     @staticmethod
     def load(path: Path) -> "Project":
-        return Project.from_dict(json.loads(path.read_text(encoding="utf-8")))
+        # utf-8-sig: Notepad and PowerShell 5.1 write a BOM when a human edits the file
+        return Project.from_dict(json.loads(path.read_text(encoding="utf-8-sig")))
 
     def speech(self) -> list[Segment]:
         return [s for s in self.segments if s.type == SPEECH]

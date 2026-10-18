@@ -1,0 +1,70 @@
+{
+ "model": "nemotron-3-ultra-550b",
+ "sentences": [
+  {
+   "id": 0,
+   "speaker": "A",
+   "gender": "male",
+   "slot": 3.262,
+   "text": {
+    "en": "Hey, I was thinking we should finally plan that trip to Portugal.",
+    "hi": "अरे, मैं सोच रहा था कि हम पुर्तगाल की ट्रिप आखिर प्लान करें।",
+    "ms": "Hei, aku fikir kita patut plan trip ke Portugal ni.",
+    "ja": "ねえ、ポルトガル旅行、ついに計画しようよ。",
+    "zh": "嘿，我想我们该计划去葡萄牙的旅行了。"
+   }
+  },
+  {
+   "id": 1,
+   "speaker": "A",
+   "gender": "male",
+   "slot": 2.752,
+   "text": {
+    "en": "Maybe in the first week of May, when the weather is nice.",
+    "hi": "शायद मई के पहले हफ्ते में, जब मौसम अच्छा हो।",
+    "ms": "Mungkin minggu pertama Mei, cuaca elok.",
+    "ja": "5月の第一週、天気いい頃にどう？",
+    "zh": "五月初吧，天气正好。"
+   }
+  },
+  {
+   "id": 2,
+   "speaker": "A",
+   "gender": "male",
+   "slot": 3.007,
+   "text": {
+    "en": "I have always wanted to ride the old yellow trams through the city.",
+    "hi": "मैं हमेशा से शहर में पुरानी पीली ट्राम में सफ़र करना चाहता था।",
+    "ms": "Aku lama dah nak naik tram kuning tua di bandar.",
+    "ja": "ずっと、街を黄色い古い路面電車で走りたかった。",
+    "zh": "我一直想坐老黄电车穿城而过。"
+   }
+  },
+  {
+   "id": 3,
+   "speaker": "B",
+   "gender": "female",
+   "slot": 3.634,
+   "text": {
+    "en": "That sounds wonderful, but I need to check my work schedule first.",
+    "hi": "यह बहुत अच्छा लगता है, लेकिन मुझे पहले अपना वर्क शेड्यूल चेक करना होगा।",
+    "ms": "Kedengar best, tapi aku kena check jadual kerja dulu.",
+    "ja": "素敵ね、でもまず仕事の予定を確認しないと。",
+    "zh": "听起来很棒，但我得先查查工作安排。"
+   }
+  },
+  {
+   "id": 4,
+   "speaker": "B",
+   "gender": "female",
+   "slot": 2.299,
+   "text": {
+    "en": "Do you want to start in Lisbon or in Porto?",
+    "hi": "क्या आप लिस्बन से शुरू करना चाहते हैं या पोर्टो से?",
+    "ms": "Nak mula di Lisbon atau Porto?",
+    "ja": "リスボンから？それともポルトから？",
+    "zh": "想从里斯本还是波尔图出发？"
+   }
+  }
+ ]
+}

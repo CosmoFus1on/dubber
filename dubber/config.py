@@ -13,7 +13,7 @@ def load_env(path: Path = ROOT / ".env") -> None:
     """Minimal .env loader (KEY=VALUE lines). Values are never logged."""
     if not path.exists():
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
@@ -50,6 +50,19 @@ HF_TOKEN = os.environ.get("HF_TOKEN", "")
 MERGE_PAUSE_S = 0.6
 SEGMENT_CAP_S = 12.0
 MUSIC_VOTES_NEEDED = 2          # of 3 detectors
+MUSIC_HOP_S = 0.1               # vote grid
+MUSIC_SUSTAIN_S = 0.5           # stem levels are power-averaged over this window before thresholding
+MUSIC_MIN_S = 2.0               # music runs shorter than this are dropped (after bridging)
+MUSIC_BRIDGE_S = 1.0            # gaps shorter than this between music runs are bridged
+MUSIC_BED_FLOOR_DB = -35.0      # energy detector: bed (no_vocals) must be at least this loud
+MUSIC_BED_MARGIN_DB = 12.0      # ... and no more than this below the vocals stem
+MUSIC_VOCALS_MIN_DB = -45.0     # whisper detector: vocals energy with no words = singing Whisper skipped
+MUSIC_BED_RISE_DB = 3.0         # ... or the bed this far above its median level under transcribed words
+MUSIC_LOGPROB_MAX = -0.8        # whisper segment stats that mean "not confident speech"
+MUSIC_COMPRESSION_MIN = 2.4
+MUSIC_NO_SPEECH_MIN = 0.6
+MUSIC_NGRAM_REPEATS = 3         # a word 3-gram repeated this often in one whisper segment (chorus)
+MUSIC_SEGMENT_FRAC = 0.6        # a speech segment more than this inside music regions becomes music
 SENTENCE_GAP_S = 0.15           # split after sentence punctuation when the gap is at least this (whisper reports real 0.4 s pauses as 0.20-0.28 s)
 SENTENCE_MIN_S = 4.0            # ... and the running segment is already this long
 OVERLAP_MIN_S = 0.3             # another speaker's turn overlapping a segment by more than this flags it
@@ -125,6 +138,7 @@ class Options:
     glossary: Optional[Path] = None   # text file, one term per line ("Term" or "Term=Translation")
     num_speakers: Optional[int] = None
     demo_fast: bool = False           # hosted demo: 1 verify attempt, no shorten rounds
+    force: bool = False               # set by the runner for --from: incremental stages ignore per-segment caches
 
 
 def norm_lang(code: str) -> str:

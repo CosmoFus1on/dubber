@@ -26,12 +26,17 @@ def load_glossary(path: Optional[Path]) -> dict[str, str]:
     if not path or not Path(path).exists():
         return {}
     out = {}
-    for line in Path(path).read_text(encoding="utf-8").splitlines():
+    for line in Path(path).read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#"):
             k, _, v = line.partition("=")
             out[k.strip()] = v.strip()
     return out
+
+
+def hand_edited(seg: Segment) -> bool:
+    """A translation typed by a human (verify.attempts == -1) is final: never re-translated, shortened or judged."""
+    return seg.verify.attempts == -1 and bool(seg.translation)
 
 
 def budget_for(seg: Segment, tgt: str) -> int:
@@ -85,13 +90,19 @@ class Translator:
     # ---- keys -------------------------------------------------------------------------------
     def key(self, seg: Segment) -> str:
         # ponytail: neighbours' text is deliberately NOT in the key, so editing one segment re-translates only it.
-        return seg.translate_key(sha1(self.glossary, seg.speaker, seg.gender), self.tgt, self.model)
+        # The prompt text is: a prompt change re-translates everything, which is what you want.
+        ctx = sha1(self.glossary, seg.speaker, seg.gender, prompts.TRANSLATE_SYSTEM)
+        return seg.translate_key(ctx, self.tgt, self.model)
+
+    hand_edited = staticmethod(lambda seg: hand_edited(seg))
 
     def needs(self, seg: Segment) -> bool:
         if seg.type != SPEECH or not seg.text.strip():
             return False
-        if seg.verify.attempts == -1 and seg.translation:  # hand-edited
+        if self.hand_edited(seg):
             return False
+        if self.opts.force:
+            return True
         return seg.translation is None or seg.extra.get("translate_key") != self.key(seg)
 
     # ---- translation ------------------------------------------------------------------------
@@ -99,8 +110,14 @@ class Translator:
         ids = [s.id for s in segs]
         msgs = prompts.translate_messages(self.src, self.tgt, self.glossary, context_lines(self.p, ids),
                                           [_line(s) for s in segs], retry)
-        data = self.llm.chat_json(msgs, self.model, fallback=config.LLM_FALLBACK_CHAIN)
+        try:
+            data = self.llm.chat_json(msgs, self.model, fallback=config.LLM_FALLBACK_CHAIN)
+        except LLMError as e:
+            log.error("translation request for ids %s failed: %s", ids, e)
+            return {}
         items = data.get("translations", data) if isinstance(data, dict) else data
+        if isinstance(items, dict) and "id" in items:  # single-line answers come back as a bare object
+            items = [items]
         out = {}
         for it in items if isinstance(items, list) else []:
             try:
@@ -153,10 +170,12 @@ class Translator:
         issue = str(j.get("issue", "")) if isinstance(j, dict) else ""
         return num("score"), num("fluency"), _embed_sim(seg.text, back), issue, back
 
-    def verify(self, seg: Segment) -> bool:
-        """Verify, re-translating with the judge's issue up to max_attempts. Returns passed."""
+    def verify(self, seg: Segment, retranslate: bool = True) -> bool:
+        """Verify, re-translating with the judge's issue up to max_attempts. Returns passed.
+        retranslate=False judges the current text once and never replaces it (used after a shorten)."""
+        if self.hand_edited(seg):
+            return True
         while True:
-            seg.verify.attempts += 1
             try:
                 score, fluency, sim, issue, back = self.check(seg)
             except LLMError as e:
@@ -164,6 +183,7 @@ class Translator:
                 seg.verify.issue = f"verify unavailable: {e}"[:200]
                 seg.flag(F_VERIFY_FAILED)
                 return False
+            seg.verify.attempts += 1  # only completed checks count
             seg.verify.back_translation, seg.verify.judge, seg.verify.sim, seg.verify.issue = back, score, round(sim, 3), issue
             seg.verify.fluency = fluency
             passed = score >= config.JUDGE_MIN and fluency >= config.FLUENCY_MIN and sim >= config.SIM_MIN
@@ -171,7 +191,7 @@ class Translator:
             if passed:
                 seg.unflag_prefix(F_VERIFY_FAILED)
                 return True
-            if seg.verify.attempts >= self.max_attempts:
+            if not retranslate or seg.verify.attempts >= self.max_attempts:
                 seg.flag(F_VERIFY_FAILED)
                 log.warning("segment %d failed verification after %d attempts: %s", seg.id, seg.verify.attempts, issue)
                 return False
@@ -187,6 +207,7 @@ class Translator:
             if got.get(seg.id):
                 seg.translation = got[seg.id]
                 seg.extra["translate_key"] = self.key(seg)
+                seg.tts.wav = seg.tts.fitted_wav = None  # the old audio no longer matches the text
 
 
 def run(project: Project, work: Path, opts: config.Options) -> None:
@@ -196,6 +217,10 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
     for s in project.segments:
         if s.type == SPEECH:
             s.budget_chars = budget_for(s, tr.tgt)
+        if s.type != SPEECH or not s.text.strip():
+            if s.translation and not tr.hand_edited(s):  # text cleared or retyped as music: drop the dub
+                s.translation, s.tts = None, type(s.tts)()
+                s.verify = Verify()
     todo = [s for s in project.sorted_segments() if tr.needs(s)]
     log.info("translate %s -> %s with %s: %d segments to translate", tr.src, tr.tgt, tr.model, len(todo))
     tr.translate_all(todo, save)

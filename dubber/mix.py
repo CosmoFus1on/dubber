@@ -51,6 +51,8 @@ def build_voice(project: Project, work: Path, n: int, sr: int) -> np.ndarray:
         x, _ = audio.read(work / s.tts.fitted_wav, sr=sr, mono=False)
         x = _stereo(x)
         a = int(round(s.start * sr))
+        if a < 0:  # hand-edited or padded start before 0: drop the part before the video begins
+            x, a = x[-a:], 0
         x = x[:max(0, n - a)]
         voice[a:a + len(x)] += x
         placed += 1

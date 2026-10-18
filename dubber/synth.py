@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 
 from . import audio, config
-from .schema import F_NO_REF, F_TTS_FALLBACK, SPEECH, Project, Segment, sha1
+from .schema import F_NO_REF, F_TTS_FAILED, F_TTS_FALLBACK, SPEECH, Project, Segment, sha1
 from .tts.base import TTSJob, chain_for, run_engine
 
 log = logging.getLogger("dubber.synth")
@@ -40,7 +40,9 @@ def prosody_hints(project: Project, work: Path) -> dict[int, dict]:
         rate = len(s.text) / max(s.duration, 0.2)                 # chars/s in the source language
         fast = rate / config.cps(project.source.get("language") or "en")
         cfg = float(np.clip(0.5 - (fast - 1.0) * 0.2, 0.3, 0.6))  # faster original -> lower cfg (quicker delivery)
-        hints[s.id] = {"exaggeration": round(exag, 2), "cfg_weight": round(cfg, 2)}
+        # coarse steps: the speaker median shifts a little whenever a segment changes, and that must not
+        # invalidate every other segment's tts_key
+        hints[s.id] = {"exaggeration": round(exag, 1), "cfg_weight": round(cfg, 1)}
     return hints
 
 
@@ -79,11 +81,14 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
             if r and r.wav and Path(r.wav).exists():
                 trim_silence(Path(r.wav))
                 s.tts.engine = engine
-                s.tts.wav = str(Path(r.wav).relative_to(work.resolve())) if Path(r.wav).is_relative_to(work.resolve()) else r.wav
+                wav = Path(r.wav)
+                s.tts.wav = wav.relative_to(work.resolve()).as_posix() if wav.is_relative_to(work.resolve()) else r.wav
                 s.tts.raw_duration = round(audio.duration(r.wav), 3)
                 s.tts.fitted_wav = None
                 s.tts.stretch = None
+                s.extra.pop("fit_key", None)
                 s.unflag_prefix(F_TTS_FALLBACK)
+                s.unflag_prefix(F_TTS_FAILED)
                 if n > 0:
                     s.flag(F_TTS_FALLBACK + engine)
                 s.extra["tts_key"] = tts_key(s, engine, project, work, hints)
@@ -95,7 +100,11 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
             break
     for s in pending:
         log.error("segment %d: every engine failed; it will be left silent", s.id)
-        s.flag("tts_failed")
+        s.tts.wav = s.tts.fitted_wav = None  # never let fit/mix pick up audio of an older translation
+        s.tts.raw_duration = s.tts.stretch = None
+        s.extra.pop("tts_key", None)
+        s.extra.pop("fit_key", None)
+        s.flag(F_TTS_FAILED)
 
 
 def trim_silence(wav: Path, top_db: float = 35.0, keep_s: float = 0.05) -> float:
@@ -135,7 +144,8 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
         if s.type != SPEECH or not s.translation:
             continue
         wav = work / s.tts.wav if s.tts.wav else None
-        if wav and wav.exists() and s.extra.get("tts_key") == tts_key(s, s.tts.engine or primary, project, work, hints):
+        if (not opts.force and wav and wav.exists()
+                and s.extra.get("tts_key") == tts_key(s, s.tts.engine or primary, project, work, hints)):
             continue
         todo.append(s)
     log.info("tts: %d/%d segments need synthesis (chain %s)", len(todo), len(project.speech()), chain)

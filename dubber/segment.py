@@ -14,9 +14,10 @@ _END = re.compile(r"[.!?。！？…]$")
 _SENT = re.compile(r"[.!?。！？]$")
 
 
-def detect_music(segment, project, work) -> bool:
-    """M3 fills this in (3-detector vote). Always speech for now."""
-    return False
+def detect_music(segs: list[Segment], project, work) -> list[Segment]:
+    """Tag music segments and append uncovered music regions (see music.py for the 3-detector vote)."""
+    from . import music
+    return music.apply(segs, work)
 
 
 def _speaker_at(t: float, turns: list) -> str:
@@ -89,6 +90,7 @@ def run(project, work, opts) -> None:
     segs = build(transcript, dia["exclusive"], project.speakers)
     flag_overlaps(segs, dia["turns"])
     for s in segs:
-        s.type = MUSIC if detect_music(s, project, work) else SPEECH
-    project.segments = segs
-    log.info("%d segments, %d overlapping", len(segs), sum(F_OVERLAP in s.flags for s in segs))
+        s.type = SPEECH
+    project.segments = detect_music(segs, project, work)
+    log.info("%d segments, %d overlapping, %d music", len(segs), sum(F_OVERLAP in s.flags for s in segs),
+             sum(s.type == MUSIC for s in segs))

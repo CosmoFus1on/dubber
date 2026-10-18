@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-from dubber import config, gpu, report
+from dubber import config, gpu, llm, report
 from dubber.schema import STAGES, Project, sha1
 
 log = logging.getLogger("dubber.runner")
@@ -101,13 +101,18 @@ def main(argv=None) -> int:
                           target_language=lang)
     if a.source_lang:
         project.source["language"] = config.norm_lang(a.source_lang)
-    state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
+    state = json.loads(state_path.read_text(encoding="utf-8-sig")) if state_path.exists() else {}
+    if not seg_path.exists():
+        # a missing segments.json is a reset: the stages that write into the Project must run again
+        for st in ("separate", "transcribe", "speakers"):
+            state.pop(st, None)
 
     forced = False
     for stage in STAGES:
+        forced = forced or stage == a.from_stage
         if a.only and stage != a.only:
             continue
-        forced = forced or stage == a.from_stage
+        opts.force = forced
         h = input_hash(stage, work, opts, device)
         st = state.get(stage, {})
         if not forced and st.get("input_hash") == h and st.get("done") and outputs_exist(stage, work, project):
@@ -115,11 +120,13 @@ def main(argv=None) -> int:
             continue
         log.info("[%s] running", stage)
         t0 = time.perf_counter()
+        llm_before = llm.STATS["calls"]
         state[stage] = {"input_hash": h, "done": False, "seconds": 0.0}
         importlib.import_module(MODULES[stage]).run(project, work, opts)
         secs = round(time.perf_counter() - t0, 2)
         # hash again: a stage may legitimately change its own inputs (e.g. separate sets source.duration)
-        state[stage] = {"input_hash": input_hash(stage, work, opts, device), "done": True, "seconds": secs}
+        state[stage] = {"input_hash": input_hash(stage, work, opts, device), "done": True, "seconds": secs,
+                        "llm_calls": llm.STATS["calls"] - llm_before}
         project.timings[stage] = secs
         project.save(seg_path)
         state_path.write_text(json.dumps(state, indent=1), encoding="utf-8")
