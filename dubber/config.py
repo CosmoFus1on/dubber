@@ -66,6 +66,7 @@ CPS = {
 }
 CPS_DEFAULT = 13
 BUDGET_FACTOR = 0.92
+PRESHORTEN_OVER = 1.15          # translation longer than budget * this is shortened by text before any TTS
 TRANSLATE_WINDOW = 20           # segments per LLM request
 CONTEXT_FULL_MAX = 600          # above this, send +/- CONTEXT_HALF segments instead of the full transcript
 CONTEXT_HALF = 40

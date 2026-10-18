@@ -50,6 +50,18 @@ def _line(seg: Segment) -> dict:
     return {"id": seg.id, "speaker": seg.speaker, "gender": seg.gender, "max_chars": seg.budget_chars, "text": seg.text}
 
 
+def shorten(llm: LLMProvider, seg: Segment, src: str, tgt: str, target_chars: int) -> Optional[str]:
+    """Ask for a shorter rewrite of seg.translation. Returns None when unavailable or unchanged."""
+    try:
+        d = llm.chat_json(prompts.shorten_messages(src, tgt, seg.text, seg.translation, target_chars),
+                          config.LLM_MODEL, fallback=config.LLM_FALLBACK_CHAIN)
+    except LLMError as e:
+        log.warning("segment %d: shorten failed (%s)", seg.id, e)
+        return None
+    t = str(d.get("translation", "")).strip() if isinstance(d, dict) else ""
+    return t if t and t != seg.translation else None
+
+
 def _embed_sim(a: str, b: str) -> float:
     global _embedder
     if _embedder is None:
@@ -109,6 +121,12 @@ class Translator:
             for s in window:
                 if s.id in got:
                     s.translation = got[s.id]
+                    # models often overshoot max_chars; a text-only shorten here is far cheaper than re-synthesis
+                    if s.budget_chars and len(s.translation) > s.budget_chars * config.PRESHORTEN_OVER:
+                        new = shorten(self.llm, s, self.src, self.tgt, s.budget_chars)
+                        if new:
+                            log.info("segment %d: pre-shortened %d -> %d chars (budget %d)", s.id, len(s.translation), len(new), s.budget_chars)
+                            s.translation = new
                     s.extra["translate_key"] = self.key(s)
                     s.verify = Verify()
                     s.unflag_prefix(F_VERIFY_FAILED)

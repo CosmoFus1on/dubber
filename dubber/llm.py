@@ -88,8 +88,8 @@ class OpenAICompatible(LLMProvider):
         body = {"model": model, "messages": messages, "temperature": temperature}
         if max_tokens:
             body["max_tokens"] = max_tokens
-        if json_mode:
-            body["response_format"] = {"type": "json_object"}
+        # ponytail: no response_format. Several free routes reject or ignore it (NVIDIA answers 502
+        # "format_ignored"); the prompts demand JSON and parse_json is tolerant, which is enough.
         req = urllib.request.Request(self.base_url + "/chat/completions",
                                      data=json.dumps(body).encode("utf-8"), headers=self._headers())
         try:
@@ -98,9 +98,6 @@ class OpenAICompatible(LLMProvider):
                 via = r.headers.get("X-Routed-Via", "")
         except urllib.error.HTTPError as e:
             detail = e.read(300).decode("utf-8", "replace")
-            if e.code == 400 and json_mode:
-                # provider without JSON mode: retry plain once (prompt already demands JSON)
-                return self._post(model, messages, False, temperature, max_tokens)
             # 413 from FreeLLMAPI means "no route with enough token quota left right now", i.e. a rate limit
             raise LLMError(f"{model}: HTTP {e.code} {detail}", retryable=e.code in (429, 413) or e.code >= 500,
                            status=e.code)

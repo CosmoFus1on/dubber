@@ -60,6 +60,7 @@ def make_env(tmp_path, dur=12.0):
 def test_fit_and_mix(tmp_path, monkeypatch):
     p, work, opts = make_env(tmp_path)
     monkeypatch.setattr(fit, "default_provider", lambda: None)
+    monkeypatch.setattr(fit, "Translator", lambda *a, **k: None)
     monkeypatch.setattr(fit, "shorten", lambda *a, **k: None)
     fit.run(p, work, opts)
     by = {s.id: s for s in p.segments}
