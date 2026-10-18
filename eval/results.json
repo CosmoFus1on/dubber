@@ -1,0 +1,269 @@
+[
+ {
+  "clip": "clip.mp4",
+  "lang": "hi",
+  "label": "hand-checked by a fluent speaker (project owner); zh/ms/ja are LLM-judged only",
+  "segments": 5,
+  "music_segments": 1,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.94,
+  "mean_fluency": 0.96,
+  "mean_sim": 0.876,
+  "stretched": 1,
+  "max_stretch": 1.25,
+  "truncated": 1,
+  "flagged": 1,
+  "flags": [
+   "stretch_over_15",
+   "truncated",
+   "verify_failed"
+  ],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 452.84,
+  "s_per_video_min": 615.77,
+  "stages": {
+   "separate": 5.75,
+   "transcribe": 14.27,
+   "speakers": 26.76,
+   "segment": 0.08,
+   "translate": 35.17,
+   "tts": 49.88,
+   "fit": 317.41,
+   "mix": 3.52
+  }
+ },
+ {
+  "clip": "clip.mp4",
+  "lang": "ms",
+  "label": "LLM-judged only",
+  "segments": 5,
+  "music_segments": 1,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.97,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.918,
+  "stretched": 1,
+  "max_stretch": 1.25,
+  "truncated": 1,
+  "flagged": 1,
+  "flags": [
+   "stretch_over_15",
+   "truncated",
+   "verify_failed"
+  ],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 277.33,
+  "s_per_video_min": 377.11,
+  "stages": {
+   "separate": 4.55,
+   "transcribe": 6.8,
+   "speakers": 20.46,
+   "segment": 0.08,
+   "translate": 107.25,
+   "tts": 39.94,
+   "fit": 94.67,
+   "mix": 3.58
+  }
+ },
+ {
+  "clip": "clip.mp4",
+  "lang": "ja",
+  "label": "LLM-judged only",
+  "segments": 5,
+  "music_segments": 1,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.97,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.9,
+  "stretched": 0,
+  "max_stretch": 1.0,
+  "truncated": 0,
+  "flagged": 0,
+  "flags": [],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 208.71,
+  "s_per_video_min": 283.8,
+  "stages": {
+   "separate": 4.58,
+   "transcribe": 6.51,
+   "speakers": 20.3,
+   "segment": 0.08,
+   "translate": 136.85,
+   "tts": 36.87,
+   "fit": 0.01,
+   "mix": 3.51
+  }
+ },
+ {
+  "clip": "clip.mp4",
+  "lang": "zh",
+  "label": "LLM-judged only",
+  "segments": 5,
+  "music_segments": 1,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.94,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.856,
+  "stretched": 0,
+  "max_stretch": 1.0,
+  "truncated": 0,
+  "flagged": 0,
+  "flags": [],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 222.41,
+  "s_per_video_min": 302.43,
+  "stages": {
+   "separate": 4.61,
+   "transcribe": 6.53,
+   "speakers": 20.78,
+   "segment": 0.07,
+   "translate": 101.12,
+   "tts": 38.34,
+   "fit": 47.44,
+   "mix": 3.52
+  }
+ },
+ {
+  "clip": "clip_single.mp4",
+  "lang": "hi",
+  "label": "hand-checked by a fluent speaker (project owner); zh/ms/ja are LLM-judged only",
+  "segments": 3,
+  "music_segments": 0,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.95,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.945,
+  "stretched": 1,
+  "max_stretch": 1.077,
+  "truncated": 0,
+  "flagged": 0,
+  "flags": [],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 239.68,
+  "s_per_video_min": 590.34,
+  "stages": {
+   "separate": 4.06,
+   "transcribe": 6.12,
+   "speakers": 21.98,
+   "segment": 0.04,
+   "translate": 75.77,
+   "tts": 36.53,
+   "fit": 93.53,
+   "mix": 1.65
+  }
+ },
+ {
+  "clip": "clip_single.mp4",
+  "lang": "ms",
+  "label": "LLM-judged only",
+  "segments": 3,
+  "music_segments": 0,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.95,
+  "mean_fluency": 0.933,
+  "mean_sim": 0.892,
+  "stretched": 1,
+  "max_stretch": 1.21,
+  "truncated": 0,
+  "flagged": 1,
+  "flags": [
+   "stretch_over_15",
+   "verify_failed"
+  ],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 282.96,
+  "s_per_video_min": 696.95,
+  "stages": {
+   "separate": 4.07,
+   "transcribe": 6.12,
+   "speakers": 22.69,
+   "segment": 0.04,
+   "translate": 161.94,
+   "tts": 36.44,
+   "fit": 49.63,
+   "mix": 2.03
+  }
+ },
+ {
+  "clip": "clip_single.mp4",
+  "lang": "ja",
+  "label": "LLM-judged only",
+  "segments": 3,
+  "music_segments": 0,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.95,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.889,
+  "stretched": 0,
+  "max_stretch": 1.0,
+  "truncated": 0,
+  "flagged": 0,
+  "flags": [],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 158.19,
+  "s_per_video_min": 389.63,
+  "stages": {
+   "separate": 4.08,
+   "transcribe": 6.14,
+   "speakers": 22.34,
+   "segment": 0.05,
+   "translate": 89.02,
+   "tts": 34.47,
+   "fit": 0.01,
+   "mix": 2.08
+  }
+ },
+ {
+  "clip": "clip_single.mp4",
+  "lang": "zh",
+  "label": "LLM-judged only",
+  "segments": 3,
+  "music_segments": 0,
+  "verify_pass_rate": 1.0,
+  "mean_judge": 0.95,
+  "mean_fluency": 1.0,
+  "mean_sim": 0.866,
+  "stretched": 0,
+  "max_stretch": 1.0,
+  "truncated": 0,
+  "flagged": 0,
+  "flags": [],
+  "engines": [
+   "chatterbox"
+  ],
+  "llm_model": "nemotron-3-ultra-550b",
+  "total_s": 164.29,
+  "s_per_video_min": 404.66,
+  "stages": {
+   "separate": 4.08,
+   "transcribe": 6.12,
+   "speakers": 22.8,
+   "segment": 0.04,
+   "translate": 70.2,
+   "tts": 58.96,
+   "fit": 0.01,
+   "mix": 2.08
+  }
+ }
+]

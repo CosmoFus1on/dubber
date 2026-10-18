@@ -96,14 +96,15 @@ def shorten_rounds(project: Project, todo: list[Segment], work: Path, opts: conf
             new = shorten(llm, s, src_lang, opts.target, target)
             if not new:
                 continue
-            prev = (s.translation, s.verify)
+            prev = (s.translation, s.verify, list(s.flags))
             s.translation, s.verify = new, Verify()
             # judge the shorter line BEFORE spending TTS on it; never let verify re-translate here (that
-            # would desync audio and text). A rejected shortening is simply reverted.
+            # would desync audio and text). A rejected shortening is simply reverted, flags included.
             if translator is not None and not translator.verify(s, retranslate=False):
                 log.info("segment %d round %d: shortened line rejected by the judge (%s); keeping previous",
                          s.id, rnd, s.verify.issue)
-                s.translation, s.verify = prev
+                s.translation, s.verify, s.flags = prev
+                s.extra["shorten_rejected"] = s.verify.issue or "judge rejected the shorter line"
                 continue
             log.info("segment %d round %d: shortened %d -> %d chars (raw %.2fs > allowed %.2fs)",
                      s.id, rnd, len(prev[0]), len(new), raw, allowed)
