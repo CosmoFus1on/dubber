@@ -48,6 +48,7 @@ class Word:
 class Verify:
     back_translation: Optional[str] = None
     judge: Optional[float] = None
+    fluency: Optional[float] = None
     sim: Optional[float] = None
     passed: Optional[bool] = None
     attempts: int = 0

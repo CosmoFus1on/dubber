@@ -65,8 +65,9 @@ CPS = {
     "ja": 7, "zh": 5.5, "ko": 9,
 }
 CPS_DEFAULT = 13
-BUDGET_FACTOR = 0.92
-PRESHORTEN_OVER = 1.15          # translation longer than budget * this is shortened by text before any TTS
+BUDGET_FACTOR = 1.0             # budget = what fits the slot at natural pace; the +15 % tempo headroom absorbs overshoot
+PRESHORTEN_OVER = 1.3           # translation longer than budget * this is shortened by text before any TTS
+FLUENCY_MIN = 0.7               # judge's native-fluency score of the target text
 TRANSLATE_WINDOW = 20           # segments per LLM request
 CONTEXT_FULL_MAX = 600          # above this, send +/- CONTEXT_HALF segments instead of the full transcript
 CONTEXT_HALF = 40

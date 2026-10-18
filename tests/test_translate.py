@@ -26,8 +26,8 @@ class FakeLLM(LLMProvider):
         if "literal translator" in sys_msg:
             return json.dumps({"back": user.replace("HI:", "")})
         if "review dubbing" in sys_msg:
-            return json.dumps({"score": 0.3 if "bad" in user.split("Back-translation")[1] else 0.95, "issue": "meaning drift"})
-        if "shorten" in sys_msg:
+            return json.dumps({"score": 0.3 if "bad" in user.split("Back-translation")[1] else 0.95, "fluency": 0.9, "issue": "meaning drift"})
+        if "tighten" in sys_msg:
             return json.dumps({"translation": "HI:short"})
         raise AssertionError("unexpected prompt")
 

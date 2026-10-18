@@ -137,33 +137,36 @@ class Translator:
             save()
 
     # ---- verification -----------------------------------------------------------------------
-    def check(self, seg: Segment) -> tuple[float, float, str, str]:
-        """Return (judge, sim, issue, back) for the segment's current translation."""
+    def check(self, seg: Segment) -> tuple[float, float, float, str, str]:
+        """Return (judge, fluency, sim, issue, back) for the segment's current translation."""
         back = self.llm.chat_json(prompts.back_messages(self.src, self.tgt, seg.translation), config.LLM_FAST,
                                   fallback=config.LLM_FAST_FALLBACK)
         back = str(back.get("back", "")) if isinstance(back, dict) else str(back)
-        j = self.llm.chat_json(prompts.judge_messages(self.src, self.tgt, seg.text, back, seg.gender), config.LLM_FAST,
-                               fallback=config.LLM_FAST_FALLBACK)
-        try:
-            score = float(j.get("score", 0.0))
-        except (TypeError, ValueError, AttributeError):
-            score = 0.0
+        # the judge reads the target text itself, so it is run on the strong pinned model, not auto:fast
+        j = self.llm.chat_json(prompts.judge_messages(self.src, self.tgt, seg.text, seg.translation, back, seg.gender),
+                               config.LLM_MODEL, fallback=config.LLM_FALLBACK_CHAIN)
+        def num(k):
+            try:
+                return float(j.get(k, 0.0))
+            except (TypeError, ValueError, AttributeError):
+                return 0.0
         issue = str(j.get("issue", "")) if isinstance(j, dict) else ""
-        return score, _embed_sim(seg.text, back), issue, back
+        return num("score"), num("fluency"), _embed_sim(seg.text, back), issue, back
 
     def verify(self, seg: Segment) -> bool:
         """Verify, re-translating with the judge's issue up to max_attempts. Returns passed."""
         while True:
             seg.verify.attempts += 1
             try:
-                score, sim, issue, back = self.check(seg)
+                score, fluency, sim, issue, back = self.check(seg)
             except LLMError as e:
                 log.warning("segment %d: verify call failed (%s); keeping translation unverified", seg.id, e)
                 seg.verify.issue = f"verify unavailable: {e}"[:200]
                 seg.flag(F_VERIFY_FAILED)
                 return False
             seg.verify.back_translation, seg.verify.judge, seg.verify.sim, seg.verify.issue = back, score, round(sim, 3), issue
-            passed = score >= config.JUDGE_MIN and sim >= config.SIM_MIN
+            seg.verify.fluency = fluency
+            passed = score >= config.JUDGE_MIN and fluency >= config.FLUENCY_MIN and sim >= config.SIM_MIN
             seg.verify.passed = passed
             if passed:
                 seg.unflag_prefix(F_VERIFY_FAILED)
@@ -172,7 +175,10 @@ class Translator:
                 seg.flag(F_VERIFY_FAILED)
                 log.warning("segment %d failed verification after %d attempts: %s", seg.id, seg.verify.attempts, issue)
                 return False
-            retry = {"id": seg.id, "prev": seg.translation, "issue": issue or f"judge {score:.2f}, similarity {sim:.2f}"}
+            why = issue or f"meaning {score:.2f}, fluency {fluency:.2f}, similarity {sim:.2f}"
+            if fluency < config.FLUENCY_MIN:
+                why += " The line must be complete, natural spoken language, not shorthand."
+            retry = {"id": seg.id, "prev": seg.translation, "issue": why}
             try:
                 got = self.translate_batch([seg], retry)
             except LLMError as e:

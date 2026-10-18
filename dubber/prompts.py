@@ -23,10 +23,11 @@ Rules:
 1. Translate meaning, tone and register, never word by word. Idioms, slang, jokes and sarcasm must sound natural in {tgt}.
 2. Keep names, brand terms and every glossary term exactly as given (do not transliterate glossary terms unless the glossary says so).
 3. Respect the speaker's gender for grammatical agreement; respect who is being addressed when the context makes it clear.
-4. Each line has max_chars. Stay within it: prefer shorter synonyms, drop fillers ("well", "you know"), never drop meaning. Count characters including spaces.
-5. Use the full transcript only as context for consistency (names, pronouns, formality, running jokes). Translate only the requested ids.
-6. Never add explanations, romanisation or brackets. Use the natural script of {tgt}.
-7. Output JSON only: {{"translations": [{{"id": <int>, "translation": "<text>"}}, ...]}} with exactly one entry per requested id."""
+4. Each line has max_chars, a length target so the dub fits the time slot. Aim for it by choosing compact natural phrasing and dropping fillers ("well", "you know"). It is a target, not a hard limit: going up to 20% over is better than dropping meaning or writing telegraphically.
+5. Fluency first. Every line must read as complete, natural spoken {tgt} that a native speaker would actually say: full verbs, connectives, particles and honorifics as the language requires. Never produce headline-style fragments or note-taking shorthand.
+6. Use the full transcript only as context for consistency (names, pronouns, formality, running jokes). Translate only the requested ids.
+7. Never add explanations, romanisation or brackets. Use the natural script of {tgt}.
+8. Output JSON only: {{"translations": [{{"id": <int>, "translation": "<text>"}}, ...]}} with exactly one entry per requested id."""
 
 TRANSLATE_USER = """Glossary (keep as-is):
 {glossary}
@@ -44,24 +45,24 @@ Previous translation: {prev}
 Reviewer issue: {issue}
 Produce a corrected translation that fixes the issue while staying within max_chars."""
 
-SHORTEN_SYSTEM = """You shorten dubbing lines in {tgt}. Keep the meaning, tone and any names. Return JSON only: {{"translation": "<text>"}}."""
+SHORTEN_SYSTEM = """You tighten dubbing lines in {tgt} so they fit a time slot. The result must still be complete, natural spoken {tgt}: full sentences with verbs and connectives, the same meaning, tone and names. Shorten by choosing more compact wording and dropping fillers or redundancy, never by dropping grammar or content. Return JSON only: {{"translation": "<text>"}}."""
 
 SHORTEN_USER = """Original {src} line: {source}
 Current {tgt} translation ({current_len} chars): {current}
-Rewrite it in at most {target_chars} characters. Drop fillers and redundancy, keep every piece of meaning you can, keep the register."""
+Rewrite it to about {target_chars} characters (a little over is fine if needed for fluency)."""
 
 BACK_SYSTEM = """You are a literal translator. Translate the given {tgt} text into {src} faithfully and completely, preserving tone, without adding or omitting anything. Return JSON only: {{"back": "<text>"}}."""
 
-JUDGE_SYSTEM = """You review dubbing translations. You are shown the original line and a back-translation of the dubbed line into the same language.
-Score how well the dubbed line preserves meaning and tone, from 0 to 1:
-1.0 = same meaning and tone; 0.85 = tiny nuance lost or slightly different wording; 0.7 = a minor detail lost but intent intact;
-0.5 = noticeable meaning drift or missing/added content; 0.2 = wrong meaning or wrong addressee; 0 = unrelated.
-Differences caused only by literal back-translation (word order, synonyms, article/particle choices) must not lower the score.
-Return JSON only: {{"score": <float>, "issue": "<one short sentence describing the problem, or empty string>"}}."""
+JUDGE_SYSTEM = """You review dubbing translations as a bilingual native speaker of {tgt}. You are shown the original line, the dubbed line in {tgt}, and a literal back-translation of the dub.
+Give two scores from 0 to 1.
+"score" = meaning and tone preserved: 1.0 same meaning and tone; 0.85 tiny nuance lost; 0.7 a minor detail lost but intent intact; 0.5 noticeable drift or missing/added content; 0.2 wrong meaning or addressee; 0 unrelated. Differences caused only by literal back-translation (word order, synonyms, articles/particles) must not lower it.
+"fluency" = how natural the {tgt} line is as spoken dialogue: 1.0 a native speaker would say exactly this; 0.8 natural with a slightly odd word; 0.6 understandable but stiff or literal; 0.4 telegraphic, missing verbs/connectives, headline style, or wrong register/dialect; 0.2 ungrammatical.
+Return JSON only: {{"score": <float>, "fluency": <float>, "issue": "<one short sentence naming the main problem, or empty string>"}}."""
 
 JUDGE_USER = """Original ({src}): {original}
+Dubbed line ({tgt}): {translation}
 Back-translation of the dub ({src}): {back}
-Target language was {tgt}. Speaker gender: {gender}."""
+Speaker gender: {gender}."""
 
 
 def translate_messages(src: str, tgt: str, glossary: dict, context_lines: list[str], lines: list[dict],
@@ -87,7 +88,7 @@ def back_messages(src: str, tgt: str, text: str) -> list[dict]:
             {"role": "user", "content": text}]
 
 
-def judge_messages(src: str, tgt: str, original: str, back: str, gender: str) -> list[dict]:
-    return [{"role": "system", "content": JUDGE_SYSTEM},
+def judge_messages(src: str, tgt: str, original: str, translation: str, back: str, gender: str) -> list[dict]:
+    return [{"role": "system", "content": JUDGE_SYSTEM.format(tgt=lang_name(tgt))},
             {"role": "user", "content": JUDGE_USER.format(src=lang_name(src), tgt=lang_name(tgt), original=original,
-                                                          back=back, gender=gender)}]
+                                                          translation=translation, back=back, gender=gender)}]
