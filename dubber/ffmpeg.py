@@ -130,13 +130,3 @@ def write_srt(segments, path, key: str = "translation") -> Path:
         n += 1
     path.write_text("\n".join(out), encoding="utf-8")
     return path
-
-
-def side_by_side(original_video, dubbed_video, out, label_left: str = "Original", label_right: str = "Dubbed") -> Path:
-    out = Path(out)
-    dt = "fontcolor=white:fontsize=28:box=1:boxcolor=black@0.5:x=10:y=10"
-    fc = (f"[0:v]drawtext=text='{label_left}':{dt}[l];[1:v]drawtext=text='{label_right}':{dt}[r];"
-          f"[l][r]hstack=inputs=2[v]")
-    run(["-i", str(original_video), "-i", str(dubbed_video), "-filter_complex", fc, "-map", "[v]", "-map", "1:a:0",
-         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", str(out)])
-    return out

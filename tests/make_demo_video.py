@@ -17,7 +17,9 @@ from dubber import config, ffmpeg  # noqa: E402
 
 MAX_DEMO_S = 60.0
 SONG_PART = (22.0, 43.0)   # clip.mp4: speaker A line, the 1919 song, speaker B line
-DT = "fontcolor=white:fontsize=26:box=1:boxcolor=black@0.55:x=12:y=12"
+FONT = Path("C:/Windows/Fonts/arial.ttf")   # ffmpeg's drawtext has no fontconfig on Windows; name a font file
+_font = "fontfile='" + FONT.as_posix().replace(":", "\\:") + "':" if FONT.exists() else ""
+DT = _font + "fontcolor=white:fontsize=26:box=1:boxcolor=black@0.55:x=12:y=12"
 
 
 def part(orig: Path, dub: Path, out: Path, start: float, length: float, right_label: str) -> Path:

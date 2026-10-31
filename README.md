@@ -7,8 +7,11 @@ speaker talking in that language, in their own voice, over the original music. S
 python dubber.py input.mp4 --to hi --out dubbed.mp4
 ```
 
-> **Demo video: coming.** It will sit right here: original on the left, dubbed on the right, with a
-> two-speaker scene and a song section that passes through untouched.
+> **Demo video**: `python tests/make_demo_video.py` renders `output/demo_side_by_side_hi.mp4` (81 s):
+> original on the left, Hindi dub on the right. The first minute is a two-person coffee-shop
+> conversation recorded with both speakers' consent; the tail is the synthetic clip's two-speaker
+> line and the 1919 song that passes through untouched. Generated files are not committed, so build it
+> locally or watch the copy linked from the repository's releases page once it is uploaded there.
 
 **About this project.** During an internship I worked on a production dubbing pipeline. This is a
 from-scratch rebuild of the *idea* as a portfolio project: none of that company's code, data, prompts
