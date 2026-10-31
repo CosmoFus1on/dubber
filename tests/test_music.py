@@ -37,6 +37,10 @@ def test_vote_and_smooth():
 def run_segment(clip: Path) -> list:
     if not clip.exists():
         pytest.skip(f"{clip.name} missing")
+    # stages 0-1 are skipped by the runner when already up to date, so this is cheap on a warm work dir
+    for stage in ("separate", "transcribe", "speakers"):
+        subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "dubber.py"), str(clip), "--to", "hi",
+                        "--only", stage], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "dubber.py"), str(clip), "--to", "hi",
                     "--from", "segment", "--only", "segment"], cwd=ROOT, check=True)
     d = json.loads((ROOT / ".cache" / "work" / clip.stem / "segments.json").read_text(encoding="utf-8"))
