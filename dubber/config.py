@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 INPUT_DIR = ROOT / "input"
 OUTPUT_DIR = ROOT / "output"
 BENCH_DIR = ROOT / "benchmarks"
+TRANSCRIPTS_DIR = ROOT / "transcripts"   # human-readable "Person N (gender): line / translation" per run
 CACHE_ROOT = ROOT / ".cache"
 WORK_DIR = CACHE_ROOT / "work"          # per-video working dirs: .cache/work/<stem>/
 MODELS_DIR = CACHE_ROOT / "models"      # engine-downloaded weights/voices

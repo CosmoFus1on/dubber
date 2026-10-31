@@ -46,3 +46,27 @@ def write(project, work, opts, state) -> Path:
     path = work / "report.json"
     path.write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
     return path
+
+
+def transcript_text(project) -> str:
+    """Original and translation per line, speakers renamed Person 1, 2... in order of first appearance."""
+    names: dict[str, str] = {}
+    out = []
+    for s in project.sorted_segments():
+        if not s.text.strip():
+            continue
+        if s.type == MUSIC:
+            out.append(f"Music: [{s.text.strip()}]\n")
+            continue
+        who = names.setdefault(s.speaker, f"Person {len(names) + 1}")
+        gender = project.speakers.get(s.speaker).gender if s.speaker in project.speakers else s.gender
+        out.append(f"{who} ({gender}): [{s.text.strip()}]")
+        out.append(f"{who} ({gender}): [{(s.translation or '').strip()}]\n")
+    return "\n".join(out)
+
+
+def write_transcript(project, opts) -> Path:
+    config.TRANSCRIPTS_DIR.mkdir(exist_ok=True)
+    path = config.TRANSCRIPTS_DIR / f"{Path(opts.video).stem}_{opts.target}.txt"
+    path.write_text(transcript_text(project), encoding="utf-8")
+    return path

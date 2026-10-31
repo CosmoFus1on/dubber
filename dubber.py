@@ -135,6 +135,8 @@ def main(argv=None) -> int:
 
     project.save(seg_path)
     report.write(project, work, opts, state)
+    if project.segments:
+        print(f"transcript: {report.write_transcript(project, opts)}")
     flagged = sum(1 for s in project.segments if s.flags)
     print(f"output: {opts.out}")
     print(f"flagged segments: {flagged}")

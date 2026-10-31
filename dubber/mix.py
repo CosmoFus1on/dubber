@@ -108,7 +108,8 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     srt = out.with_suffix(".srt")
     ffmpeg.write_srt([s for s in project.sorted_segments() if s.type == SPEECH or s.text], srt)
-    ffmpeg.mux(opts.video, final_path, out, keep_original_audio=opts.keep_original_audio, srt=srt)
+    ffmpeg.mux(opts.video, final_path, out, keep_original_audio=opts.keep_original_audio,
+               srt=srt if srt.stat().st_size else None)  # ffmpeg rejects an empty subtitle file
     vdur, adur = ffmpeg.duration(opts.video), ffmpeg.duration(out)
     log.info("wrote %s (video %.3fs, output %.3fs) and %s", out, vdur, adur, srt)
     if abs(vdur - adur) > 0.1:

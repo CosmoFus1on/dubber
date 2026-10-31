@@ -83,6 +83,25 @@ def flag_overlaps(segs: list[Segment], turns: list) -> None:
             seg.extra["overlaps_with"] = other
 
 
+def carry_over(old: list, new: list, tol: float = 0.05) -> int:
+    """Re-segmentation must not throw away work: a new segment with the same text, type and (within tol)
+    the same start keeps the old one's translation, verification, TTS state, flags and extras."""
+    by_text = {}
+    for o in old:
+        by_text.setdefault((o.type, o.text.strip()), []).append(o)
+    kept = 0
+    for n in new:
+        for o in by_text.get((n.type, n.text.strip()), []):
+            if abs(o.start - n.start) <= tol:
+                n.translation, n.budget_chars, n.verify, n.tts = o.translation, o.budget_chars, o.verify, o.tts
+                n.flags, n.extra = list(o.flags), dict(o.extra, **n.extra)
+                kept += 1
+                break
+    if old:
+        log.info("re-segmentation kept the work of %d/%d segments", kept, len(new))
+    return kept
+
+
 def run(project, work, opts) -> None:
     work = Path(work)
     transcript = json.loads((work / "transcript.json").read_text(encoding="utf-8"))
@@ -91,6 +110,8 @@ def run(project, work, opts) -> None:
     flag_overlaps(segs, dia["turns"])
     for s in segs:
         s.type = SPEECH
-    project.segments = detect_music(segs, project, work)
+    segs = detect_music(segs, project, work)
+    carry_over(project.segments, segs)
+    project.segments = segs
     log.info("%d segments, %d overlapping, %d music", len(segs), sum(F_OVERLAP in s.flags for s in segs),
              sum(s.type == MUSIC for s in segs))

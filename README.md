@@ -62,7 +62,12 @@ python tests\make_test_clip.py --single   # builds input\clip.mp4 and input\clip
 python dubber.py input\clip_single.mp4 --to hi
 ```
 
-Drop your own videos in `input/`; dubs land in `output/` as `<name>_<lang>.mp4` plus an `.srt`.
+Drop your own videos in `input/`; dubs land in `output/` as `<name>_<lang>.mp4` plus an `.srt`, and
+every run writes `transcripts/<name>_<lang>.txt` with each line as
+`Person 1 (female): [original]` followed by `Person 1 (female): [translation]`.
+
+Prefer buttons? `python app.py` opens a small desktop window: pick the video, pick where to save,
+pick the language, watch the eight stages light up, cancel if you must. It runs the same `dubber.py`.
 
 `.env` needs three things, names only in `.env.example`:
 
@@ -231,8 +236,10 @@ Three folders you touch, the code, and nothing else visible:
 ```
 input/               put videos here (the synthetic test clips are built here too)
 output/              dubbed .mp4 + .srt per run
+transcripts/         per run: "Person N (gender): [line]" and its translation, in order
 benchmarks/          TTS benchmark + end-to-end eval: scripts, sentences, tts_results.md, eval_results.md
 dubber.py            CLI and stage runner (resume logic lives here)
+app.py               desktop UI over dubber.py (tkinter: file pickers, stage progress, log, cancel)
 dubber/
   schema.py          segments.json contract
   config.py          every tunable: speech rates, thresholds, engine table, model names, folders
