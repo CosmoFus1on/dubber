@@ -1,5 +1,5 @@
-"""Acceptance: the song section of tests/clip.mp4 is untouched in the dubbed output (corr > 0.999 with the
-original, allowing only a constant loudness gain). Needs a completed run in work/clip and out/clip_hi.mp4."""
+"""Acceptance: the song section of input/clip.mp4 is untouched in the dubbed output (corr > 0.999 with the
+original, allowing only a constant loudness gain). Needs a completed run in .cache/work/clip and output/clip_hi.mp4."""
 import json
 from pathlib import Path
 
@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parent.parent
 
 @pytest.mark.slow
 def test_song_region_is_original_audio():
-    work, out = ROOT / "work" / "clip", ROOT / "out" / "clip_hi.mp4"
+    work, out = ROOT / ".cache" / "work" / "clip", ROOT / "output" / "clip_hi.mp4"
     if not (work / "audio.wav").exists() or not out.exists():
-        pytest.skip("run: python dubber.py tests/clip.mp4 --to hi --out out/clip_hi.mp4")
+        pytest.skip("run: python dubber.py input/clip.mp4 --to hi --out output/clip_hi.mp4")
     truth = json.loads((ROOT / "tests" / "clip_truth.json").read_text(encoding="utf-8"))
     a, b = truth["song"]
     sr = 48000

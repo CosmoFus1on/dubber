@@ -14,8 +14,8 @@ def _ov(a0, a1, b0, b1):
 
 @pytest.mark.slow
 def test_two_speakers_on_clip():
-    clip = ROOT / "tests" / "clip.mp4"
-    work = ROOT / "work" / "clip"
+    clip = ROOT / "input" / "clip.mp4"
+    work = ROOT / ".cache" / "work" / "clip"
     for stage in ("separate", "transcribe"):  # cached when up to date
         subprocess.run([sys.executable, "dubber.py", str(clip), "--to", "hi", "--only", stage], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "dubber.py", str(clip), "--to", "hi", "--from", "speakers", "--only", "speakers"],

@@ -44,7 +44,7 @@ flowchart LR
     M --> O[dubbed.mp4 + .srt]
 ```
 
-Every stage writes to `work/<video>/`, and `segments.json` in there is the single source of truth.
+Every stage writes to `.cache/work/<video>/`, and `segments.json` in there is the single source of truth.
 If a crash happens, the next run picks up where it stopped. If the pipeline gets a name wrong or
 mis-hears a line, open `segments.json`, fix the text or the translation, run again, and only that
 segment is redone.
@@ -58,9 +58,11 @@ with about 6 GB free (or `--cpu`, which is slow but works), and two free account
 ```powershell
 .\setup.ps1 -Engines chatterbox        # main venv + the primary TTS engine in its own venv
 copy .env.example .env                 # then fill it in, see below
-python tests\make_test_clip.py --single
-python dubber.py tests\clip_single.mp4 --to hi
+python tests\make_test_clip.py --single   # builds input\clip.mp4 and input\clip_single.mp4
+python dubber.py input\clip_single.mp4 --to hi
 ```
+
+Drop your own videos in `input/`; dubs land in `output/` as `<name>_<lang>.mp4` plus an `.srt`.
 
 `.env` needs three things, names only in `.env.example`:
 
@@ -95,7 +97,7 @@ I checked each model's licence on its own card on **2026-10-18** before picking 
 | TTS, bench only | F5-TTS | code MIT, weights **CC-BY-NC-4.0** | zh and en only; strong voice, but it mis-paces when the reference clip is in another language |
 | TTS, last resort | Piper | **GPL-3.0** code, MIT voices | no cloning, runs on CPU in a second; this is what `--cpu` uses |
 
-Engines that pin incompatible library versions live in their own virtualenv under `envs/` and are
+Engines that pin incompatible library versions live in their own virtualenv under `.envs/` and are
 driven through a small subprocess runner, so one `pip` conflict never takes the pipeline down.
 Which engine handles which language is a table in `dubber/config.py`.
 
@@ -133,7 +135,7 @@ models already downloaded. Nothing is estimated.
 ### TTS benchmark
 
 Five dialogue lines translated into each language, cloned from the two test speakers, one engine at a
-time (`bench/results.md` has the method and per-line data).
+time (`benchmarks/tts_results.md` has the method and per-line data).
 
 | engine | lang | load s | RTF | timing error mean / max | speaker sim | VRAM |
 |---|---|---|---|---|---|---|
@@ -216,7 +218,7 @@ or could not verify, so there is always a record of where the dub departs from t
 
 ## Fixing mistakes by hand
 
-Open `work/<video>/segments.json`. You may change `speaker`, `gender`, `start`, `end`, `text`,
+Open `.cache/work/<video>/segments.json`. You may change `speaker`, `gender`, `start`, `end`, `text`,
 `type` (`speech` or `music`) and `translation`. If you write a `translation` yourself, set
 `verify.attempts` to `-1` and it will be used as-is and never re-translated. Run `dubber.py` again
 with the same arguments and only what you touched is redone; the stems, transcript and diarization
@@ -224,22 +226,28 @@ stay as they are. Notepad's UTF-8 with BOM is fine.
 
 ## Repository map
 
+Three folders you touch, the code, and nothing else visible:
+
 ```
+input/               put videos here (the synthetic test clips are built here too)
+output/              dubbed .mp4 + .srt per run
+benchmarks/          TTS benchmark + end-to-end eval: scripts, sentences, tts_results.md, eval_results.md
 dubber.py            CLI and stage runner (resume logic lives here)
 dubber/
   schema.py          segments.json contract
-  config.py          every tunable: speech rates, thresholds, engine table, model names
+  config.py          every tunable: speech rates, thresholds, engine table, model names, folders
   separate.py transcribe.py speakers.py segment.py music.py      stages 0-2
   translate.py prompts.py llm.py                                  stage 3
   synth.py tts/      stage 4 (one module per engine, subprocess runner in tts/base.py)
   fit.py mix.py      stage 5
   report.py          report.json
-tests/               make_test_clip.py builds the clips; pytest -m "not slow" runs in seconds
-bench/               TTS benchmark and results
-eval/                end-to-end evaluation and results
-review/              the independent code review that shaped M3
+tests/               make_test_clip.py builds the clips; pytest -m "not slow" runs in seconds;
+                     review_m3.md is the independent code review that shaped M3
 setup.ps1            idempotent Windows setup
 ```
+
+Generated and hidden: `.venv/` (main env), `.envs/<engine>/` (TTS engine envs), `.cache/work/<video>/`
+(per-run working dirs), `.cache/models/` and `.cache/voices/` (downloaded weights and voices).
 
 ## What's next
 

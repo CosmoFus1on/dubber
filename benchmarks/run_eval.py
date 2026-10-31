@@ -1,6 +1,6 @@
 """Evaluation harness: dub each clip into each language, collect measured numbers into eval/results.md.
 
-Usage: python eval/run_eval.py [--langs hi,ms,ja,zh] [--clips tests/clip.mp4,...] [--skip-run]
+Usage: python benchmarks/run_eval.py [--langs hi,ms,ja,zh] [--clips input/clip.mp4,...] [--skip-run]
 Every number is read from the run's segments.json / report.json; nothing is estimated.
 Human labels: a language is "hand-checked by a fluent speaker" only when eval/hand_checks.json says so.
 """
@@ -14,12 +14,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "eval"
+OUT = ROOT / "benchmarks"
 
 
 def run(clip: Path, lang: str) -> Path:
-    work = ROOT / "work" / f"eval_{clip.stem}_{lang}"
-    out = ROOT / "out" / f"eval_{clip.stem}_{lang}.mp4"
+    work = ROOT / ".cache" / "work" / f"eval_{clip.stem}_{lang}"
+    out = ROOT / "output" / f"eval_{clip.stem}_{lang}.mp4"
     cmd = [sys.executable, "-X", "utf8", "dubber.py", str(clip), "--to", lang, "--work", str(work), "--out", str(out)]
     r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if r.returncode != 0:
@@ -59,7 +59,7 @@ def collect(work: Path, clip: Path, lang: str, labels: dict) -> dict | None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--langs", default="hi,ms,ja,zh")
-    ap.add_argument("--clips", default="tests/clip.mp4,tests/clip_single.mp4")
+    ap.add_argument("--clips", default="input/clip.mp4,input/clip_single.mp4")
     ap.add_argument("--skip-run", action="store_true", help="only collect from existing work dirs")
     a = ap.parse_args()
     labels_path = OUT / "hand_checks.json"
@@ -67,7 +67,7 @@ def main() -> None:
     rows = []
     for clip in [ROOT / c for c in a.clips.split(",")]:
         for lang in a.langs.split(","):
-            work = ROOT / "work" / f"eval_{clip.stem}_{lang}"
+            work = ROOT / ".cache" / "work" / f"eval_{clip.stem}_{lang}"
             if not a.skip_run:
                 print(f"== {clip.name} -> {lang}")
                 work = run(clip, lang)
@@ -75,7 +75,7 @@ def main() -> None:
             if row:
                 rows.append(row)
                 print(json.dumps({k: row[k] for k in ("clip", "lang", "verify_pass_rate", "mean_fluency", "stretched", "flagged", "s_per_video_min")}))
-    (OUT / "results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+    (OUT / "eval_results.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
     lines = ["# Evaluation results (measured)", "",
              "Pass = judge >= 0.7, fluency >= 0.7, embedding similarity >= 0.75 after up to 3 attempts. "
              "s/min = wall-clock seconds per minute of video on an RTX 3080, models already downloaded.", "",
@@ -85,8 +85,8 @@ def main() -> None:
         lines.append(f"| {r['clip']} | {r['lang']} | {r['label']} | {r['segments']} | {r['music_segments']} | {r['verify_pass_rate']} | "
                      f"{r['mean_judge']} | {r['mean_fluency']} | {r['mean_sim']} | {r['stretched']} | {r['max_stretch']} | "
                      f"{r['truncated']} | {r['flagged']} {' '.join(r['flags'])} | {','.join(r['engines'] or [])} | {r['s_per_video_min']} |")
-    (OUT / "results.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print("wrote", OUT / "results.md")
+    (OUT / "eval_results.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print("wrote", OUT / "eval_results.md")
 
 
 if __name__ == "__main__":

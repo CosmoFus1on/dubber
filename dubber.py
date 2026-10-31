@@ -84,8 +84,8 @@ def main(argv=None) -> int:
     setup_logging(a.verbose)
     video = a.input.resolve()
     lang = config.norm_lang(a.to)
-    work = (a.work or Path("work") / video.stem).resolve()
-    out = a.out or Path("out") / f"{video.stem}_{lang}.mp4"
+    work = (a.work or config.WORK_DIR / video.stem).resolve()
+    out = a.out or config.OUTPUT_DIR / f"{video.stem}_{lang}.mp4"
     work.mkdir(parents=True, exist_ok=True)
     device = gpu.device(a.cpu)
     opts = config.Options(video=video, target=lang, out=out, work=work, device=device, cpu=a.cpu,

@@ -1,6 +1,6 @@
 """Chatterbox Multilingual v3 (Resemble AI, MIT). Zero-shot voice cloning, 23 languages.
 
-Runs in envs/chatterbox (pins torch 2.6.0 / transformers 5.2.0). Every output carries Resemble's
+Runs in .envs/chatterbox (pins torch 2.6.0 / transformers 5.2.0). Every output carries Resemble's
 PerTh watermark; we keep it. Prosody hints: exaggeration (emotion intensity) and cfg_weight (pacing).
 """
 from __future__ import annotations

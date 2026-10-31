@@ -1,7 +1,7 @@
 # dubber setup (Windows PowerShell 5.1). Idempotent: safe to re-run.
 #   .\setup.ps1                       main venv, GPU torch
 #   .\setup.ps1 -Cpu                  CPU-only torch
-#   .\setup.ps1 -Engines chatterbox,xtts,openvoice,f5   also create envs\<engine> venvs
+#   .\setup.ps1 -Engines chatterbox,xtts,openvoice,f5   also create .envs\<engine> venvs
 param(
     [switch]$Cpu,
     [string[]]$Engines = @()
@@ -21,7 +21,7 @@ function Run-Native {
 }
 
 # ---- engine venvs: one obvious place to adjust per-engine installs ----
-# Each value is a list of argument lists for envs\<engine>\Scripts\python.exe (one call per entry).
+# Each value is a list of argument lists for .envs\<engine>\Scripts\python.exe (one call per entry).
 # torch 2.8.0 for xtts/openvoice/f5: torch 2.9+ routes torchaudio through torchcodec, which needs a shared
 # FFmpeg build (the usual winget/gyan.dev build is static). Piper runs in the main venv (requirements.txt).
 $Cu128 = "https://download.pytorch.org/whl/cu128"
@@ -60,17 +60,17 @@ Run-Native $VenvPy @("-m", "pip", "install", "nvidia-cudnn-cu12")
 Run-Native $VenvPy @("-m", "pip", "install", "--no-deps", "resemblyzer")  # bench only; its deps would pull the py2 `typing` backport and a webrtcvad sdist
 
 # ---- Piper test voices ----
-$Voices = Join-Path $PSScriptRoot "tests\voices"
+$Voices = Join-Path $PSScriptRoot ".cache\voices"
 New-Item -ItemType Directory -Force -Path $Voices | Out-Null
 Run-Native $VenvPy @("-m", "piper.download_voices", "--download-dir", $Voices, "en_US-ryan-medium", "en_US-lessac-medium")
 
 # ---- engine venvs ----
 foreach ($e in $Engines) {
     if (-not $EngineSpecs.ContainsKey($e)) { Write-Warning "unknown engine '$e'"; continue }
-    $dir = Join-Path $PSScriptRoot "envs\$e"
+    $dir = Join-Path $PSScriptRoot ".envs\$e"
     $epy = Join-Path $dir "Scripts\python.exe"
     if (-not (Test-Path $epy)) {
-        Write-Host "Creating envs\$e"
+        Write-Host "Creating .envs\$e"
         Run-Native $Py310 @("-m", "venv", $dir)
     }
     Run-Native $epy @("-m", "pip", "install", "--upgrade", "pip")

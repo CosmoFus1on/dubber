@@ -1,8 +1,8 @@
 """Piper (rhasspy/OHF-Voice, piper-tts 1.8). Code GPL-3.0; the voices used here (rhasspy/piper-voices) are MIT.
 
 No cloning: a fixed voice per (language, gender). Runs in the main venv (ONNX, CPU is fast enough).
-Voices download lazily into models/piper/ on first use. zh needs piper-tts[zh] (g2pW, also downloaded
-into models/piper/), ja needs piper-tts[ja] (pyopenjtalk-plus). Speed: length_scale = default / job.speed.
+Voices download lazily into .cache/models/piper/ on first use. zh needs piper-tts[zh] (g2pW, also downloaded
+into .cache/models/piper/), ja needs piper-tts[ja] (pyopenjtalk-plus). Speed: length_scale = default / job.speed.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .base import TTSEngine, TTSJob, TTSResult, main
 
 log = logging.getLogger("dubber.tts.piper")
 
-VOICE_DIR = config.ROOT / "models" / "piper"
+VOICE_DIR = config.MODELS_DIR / "piper"
 # (voice name, speaker_id) per language and gender; "unknown" falls back to female.
 VOICES = {
     "en": {"male": ("en_US-ryan-medium", None), "female": ("en_US-lessac-medium", None)},

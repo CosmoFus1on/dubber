@@ -1,6 +1,6 @@
 """F5-TTS v1 Base (SWivid/F5-TTS). Code MIT; model weights CC-BY-NC-4.0 (non-commercial). zh + en only.
 
-Runs in envs/f5 (torch 2.8.0+cu128). F5 needs the reference clip's transcript: we pass ref_text="" and
+Runs in .envs/f5 (torch 2.8.0+cu128). F5 needs the reference clip's transcript: we pass ref_text="" and
 f5-tts transcribes the (auto-clipped, <=12 s) reference with Whisper itself, cached per clip.
 Speed: F5 `speed` = job.speed.
 """

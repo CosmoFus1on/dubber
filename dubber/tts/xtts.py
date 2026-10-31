@@ -1,7 +1,7 @@
 """XTTS-v2 via coqui-tts 0.27 (Idiap fork). Code MPL-2.0; model weights Coqui Public Model License
 (non-commercial only). Zero-shot cloning from the reference clip, 17 languages.
 
-Runs in envs/xtts (torch 2.8.0+cu128: 2.9+ would need torchcodec). COQUI_TOS_AGREED=1 accepts the CPML
+Runs in .envs/xtts (torch 2.8.0+cu128: 2.9+ would need torchcodec). COQUI_TOS_AGREED=1 accepts the CPML
 prompt non-interactively. Speed: XTTS `speed` = job.speed.
 """
 from __future__ import annotations

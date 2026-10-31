@@ -19,9 +19,9 @@ TEXT = {"en": "Hey, I was thinking we should finally plan that trip.",
 
 if __name__ == "__main__":
     name, langs = sys.argv[1], sys.argv[2:] or ["en"]
-    out = ROOT / "bench" / "out" / "smoke"
+    out = ROOT / "benchmarks" / "out" / "smoke"
     out.mkdir(parents=True, exist_ok=True)
-    ref = str(ROOT / "work" / "clip" / "refs" / "SPEAKER_01.wav")
+    ref = str(ROOT / ".cache" / "work" / "clip" / "refs" / "SPEAKER_01.wav")
     jobs = [TTSJob(l, TEXT[l], l, str(out / f"{name}_{l}.wav"), ref_wav=ref, gender="female") for l in langs]
     t = time.time()
     res = run_engine(name, jobs, "cuda")

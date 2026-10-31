@@ -1,6 +1,6 @@
 """Acceptance: editing one segment's text in segments.json and rerunning redoes only that segment's
 translation / TTS / fit; stages 0-2 outputs are untouched (mtime check). Needs a completed run in
-work/clip (python dubber.py tests/clip.mp4 --to hi), the LLM proxy and the Chatterbox env."""
+.cache/work/clip (python dubber.py input/clip.mp4 --to hi), the LLM proxy and the Chatterbox env."""
 import json
 import shutil
 import subprocess
@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "work" / "clip"
-WORK = ROOT / "work" / "clip_resume"
+SRC = ROOT / ".cache" / "work" / "clip"
+WORK = ROOT / ".cache" / "work" / "clip_resume"
 EDIT_ID = 1
 NEW_TEXT = "I have always wanted to ride those old yellow trams across the whole city."
 
@@ -23,7 +23,7 @@ def mtimes(paths):
 @pytest.mark.slow
 def test_edit_one_segment_redoes_only_that_segment():
     if not (SRC / "mix.wav").exists():
-        pytest.skip("run the full pipeline on tests/clip.mp4 first")
+        pytest.skip("run the full pipeline on input/clip.mp4 first")
     if WORK.exists():
         shutil.rmtree(WORK)
     shutil.copytree(SRC, WORK)
@@ -41,8 +41,8 @@ def test_edit_one_segment_redoes_only_that_segment():
     before_untouched, before_tts, before_fit = mtimes(untouched), mtimes(other_tts), mtimes(other_fit)
     edited_tts_before = (WORK / "tts" / f"{EDIT_ID:05d}.wav").stat().st_mtime_ns
 
-    r = subprocess.run([sys.executable, "-X", "utf8", "dubber.py", "tests/clip.mp4", "--to", "hi",
-                        "--work", str(WORK), "--out", "out/clip_resume_hi.mp4"],
+    r = subprocess.run([sys.executable, "-X", "utf8", "dubber.py", "input/clip.mp4", "--to", "hi",
+                        "--work", str(WORK), "--out", "output/clip_resume_hi.mp4"],
                        cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace")
     assert r.returncode == 0, r.stderr[-2000:]
 

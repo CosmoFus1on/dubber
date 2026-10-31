@@ -39,14 +39,14 @@ def run_segment(clip: Path) -> list:
         pytest.skip(f"{clip.name} missing")
     subprocess.run([sys.executable, "-X", "utf8", str(ROOT / "dubber.py"), str(clip), "--to", "hi",
                     "--from", "segment", "--only", "segment"], cwd=ROOT, check=True)
-    d = json.loads((ROOT / "work" / clip.stem / "segments.json").read_text(encoding="utf-8"))
+    d = json.loads((ROOT / ".cache" / "work" / clip.stem / "segments.json").read_text(encoding="utf-8"))
     return [(s["start"], s["end"]) for s in d["segments"] if s["type"] == "music"]
 
 
 @pytest.mark.slow
 def test_clip_song_detected():
     truth = json.loads((ROOT / "tests" / "clip_truth.json").read_text(encoding="utf-8"))
-    music = run_segment(ROOT / "tests" / "clip.mp4")
+    music = run_segment(ROOT / "input" / "clip.mp4")
     t = np.arange(0, truth["duration"], 0.01)
     det = np.zeros(len(t), bool)
     for a, b in music:
@@ -60,4 +60,4 @@ def test_clip_song_detected():
 
 @pytest.mark.slow
 def test_clip_single_no_music():
-    assert run_segment(ROOT / "tests" / "clip_single.mp4") == []
+    assert run_segment(ROOT / "input" / "clip_single.mp4") == []

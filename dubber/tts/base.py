@@ -4,7 +4,7 @@ An engine module (dubber/tts/<name>.py) must:
   * import only stdlib + this module at import time (heavy imports inside synth()),
   * define ENGINE = <Engine instance> with .name, .languages (frozenset of 2-letter codes), .clones,
   * end with:  if __name__ == "__main__": main(ENGINE)
-If envs/<name>/Scripts/python.exe exists, the engine runs in that venv via subprocess (used when
+If .envs/<name>/Scripts/python.exe exists, the engine runs in that venv via subprocess (used when
 its dependency pins conflict with the main venv); otherwise it runs in-process.
 """
 from __future__ import annotations

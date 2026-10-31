@@ -1,6 +1,6 @@
-"""Build tests/clip.mp4 (~45 s, two speakers, pause, song) and, with --single, tests/clip_single.mp4.
+"""Build input/clip.mp4 (~45 s, two speakers, pause, song) and, with --single, input/clip_single.mp4.
 
-Dialogue comes from Piper voices in tests/voices/ (git-ignored; setup.ps1 or this script downloads them).
+Dialogue comes from Piper voices in .cache/voices/ (git-ignored; setup.ps1 or this script downloads them).
 Ground truth timings are written next to the clip as clip_truth.json / clip_single_truth.json.
 
     .venv\\Scripts\\python.exe -X utf8 tests\\make_test_clip.py [--single] [--fake-song]
@@ -19,10 +19,13 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
+from dubber import config  # noqa: E402
+sys.path.insert(0, str(HERE.parent))
 from dubber import audio, ffmpeg  # noqa: E402
 
 SR = 48000
-VOICES = HERE / "voices"
+VOICES = config.VOICES_DIR
+CLIPS = config.INPUT_DIR
 MALE, FEMALE = "en_US-ryan-medium", "en_US-lessac-medium"
 SONG_ITEM = "christmasbells1919"          # Edison blue amberol 1919, public domain
 SONG_URL = f"https://archive.org/download/{SONG_ITEM}/{SONG_ITEM}_64kb.mp3"
@@ -167,12 +170,13 @@ def build(single: bool, force_fake_song: bool) -> tuple[Path, dict, str]:
     mix = np.clip(dialogue + bed, -1, 1)
 
     stem = "clip_single" if single else "clip"
-    wav = HERE / f"{stem}_audio.wav"
+    CLIPS.mkdir(exist_ok=True)
+    wav = CLIPS / f"{stem}_audio.wav"
     audio.write(wav, np.stack([mix, mix], axis=1), SR)
     dur = n / SR
     dt = ",".join(f"drawtext=fontfile='{FONT}':text='{txt}':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.6"
                   f":x=(w-text_w)/2:y=h-60:enable='between(t,{a:.3f},{b:.3f})'" for a, b, txt in labels)
-    out = HERE / f"{stem}.mp4"
+    out = CLIPS / f"{stem}.mp4"
     ffmpeg.run(["-f", "lavfi", "-i", f"testsrc2=size=640x360:rate=25:duration={dur:.3f}", "-i", str(wav),
                 "-vf", dt, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
                 "-ac", "2", "-t", f"{dur:.3f}", str(out)])

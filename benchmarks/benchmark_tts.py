@@ -1,4 +1,4 @@
-"""TTS benchmark: every available engine x {hi, ms, ja, zh} it supports, 5 fixed sentences (bench/sentences.json).
+"""TTS benchmark: every available engine x {hi, ms, ja, zh} it supports, 5 fixed sentences (benchmarks/sentences.json).
 
     .venv\Scripts\python.exe -X utf8 bench\benchmark_tts.py                 # all engines
     .venv\Scripts\python.exe -X utf8 bench\benchmark_tts.py xtts piper      # just these (merged into results.json)
@@ -34,7 +34,7 @@ from dubber.tts.base import ENGINE_MODULES, TTSJob, available, engine_python, ru
 BENCH = ROOT / "bench"
 LANGS = ["hi", "ms", "ja", "zh"]
 ENGINES = ["chatterbox", "xtts", "openvoice", "f5", "piper"]
-REF = {"A": ROOT / "work" / "clip" / "refs" / "SPEAKER_00.wav", "B": ROOT / "work" / "clip" / "refs" / "SPEAKER_01.wav"}
+REF = {"A": ROOT / ".cache" / "work" / "clip" / "refs" / "SPEAKER_00.wav", "B": ROOT / ".cache" / "work" / "clip" / "refs" / "SPEAKER_01.wav"}
 
 
 def vram_used() -> int:

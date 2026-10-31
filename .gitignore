@@ -1,19 +1,21 @@
 # secrets
 .env
-# runtime artefacts
-work/
-out/
+# user material and run outputs
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+# everything generated: per-run work dirs, downloaded models and voices, benchmark audio
+.cache/
+benchmarks/out/
 *.wav
 *.mp4
 *.mp3
 *.flac
-!tests/fixtures/**
 # environments
 .venv/
-envs/
-# caches / models
-.cache/
-models/
+.envs/
+# model files and python junk
 *.ckpt
 *.pt
 *.pth
@@ -22,8 +24,3 @@ models/
 __pycache__/
 *.pyc
 .pytest_cache/
-# demo material lives on HF / releases, not in git
-demo/*.mp4
-eval/clips/
-bench/out/
-tests/voices/

@@ -8,6 +8,15 @@ from typing import Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# ---- folders. Visible: input/, output/, benchmarks/. Everything generated hides under .cache/ and .envs/ ----
+INPUT_DIR = ROOT / "input"
+OUTPUT_DIR = ROOT / "output"
+BENCH_DIR = ROOT / "benchmarks"
+CACHE_ROOT = ROOT / ".cache"
+WORK_DIR = CACHE_ROOT / "work"          # per-video working dirs: .cache/work/<stem>/
+MODELS_DIR = CACHE_ROOT / "models"      # engine-downloaded weights/voices
+VOICES_DIR = CACHE_ROOT / "voices"      # Piper voices used to build the test clips
+
 
 def load_env(path: Path = ROOT / ".env") -> None:
     """Minimal .env loader (KEY=VALUE lines). Values are never logged."""
@@ -119,7 +128,7 @@ TTS_FALLBACK = {
 }
 TTS_DEFAULT_CHAIN = ["chatterbox", "xtts", "openvoice", "piper"]
 TTS_CPU_CHAIN = ["piper", "chatterbox"]
-ENGINE_VENVS = ROOT / "envs"    # envs/<engine>/Scripts/python.exe when an engine needs its own pins
+ENGINE_VENVS = ROOT / ".envs"   # .envs/<engine>/Scripts/python.exe when an engine needs its own pins
 
 # ---- language aliases (whisper/pyannote codes vs engine codes) ----
 LANG_ALIASES = {"zh-cn": "zh", "zh-tw": "zh", "cmn": "zh", "pt-br": "pt", "jw": "jv"}
@@ -131,7 +140,7 @@ class Options:
     video: Path
     target: str                       # normalized 2-letter target language
     out: Path
-    work: Path                        # work/<stem>
+    work: Path                        # .cache/work/<stem>
     device: str = "cuda"              # "cuda" or "cpu"
     cpu: bool = False
     keep_original_audio: bool = False

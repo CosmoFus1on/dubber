@@ -2,7 +2,7 @@
 
 `python dubber.py input.mp4 --to hi --out dubbed.mp4`
 
-Everything for one input lives in `work/<stem>/`. Stages read and write files there; the single
+Everything for one input lives in `.cache/work/<stem>/`. Stages read and write files there; the single
 source of truth for segment-level data is `segments.json` (see `dubber/schema.py`).
 
 ## Stages

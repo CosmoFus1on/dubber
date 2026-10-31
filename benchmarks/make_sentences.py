@@ -1,4 +1,4 @@
-"""Build bench/sentences.json once: first 5 lines of tests/clip_truth.json + LLM translations (hi, ms, ja, zh).
+"""Build benchmarks/sentences.json once: first 5 lines of tests/clip_truth.json + LLM translations (hi, ms, ja, zh).
 
     .venv\Scripts\python.exe -X utf8 bench\make_sentences.py
 """

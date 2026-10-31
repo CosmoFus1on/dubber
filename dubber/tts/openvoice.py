@@ -2,9 +2,9 @@
 
 MeloTTS speaks the line in its base voice for the language, then OpenVoice's ToneColorConverter moves the
 timbre to the reference clip's speaker (tone colour only: accent and rhythm stay Melo's).
-Runs in envs/openvoice (torch 2.8.0+cu128, MeloTTS pins transformers 4.27.4; OpenVoice installed --no-deps
+Runs in .envs/openvoice (torch 2.8.0+cu128, MeloTTS pins transformers 4.27.4; OpenVoice installed --no-deps
 because its own pins are stale; Japanese needs `python -m unidic download`). Checkpoints from
-myshell-ai/OpenVoiceV2 go to models/openvoice/. Watermarking (wavmark) is off. Speed: Melo `speed` = job.speed.
+myshell-ai/OpenVoiceV2 go to .cache/models/openvoice/. Watermarking (wavmark) is off. Speed: Melo `speed` = job.speed.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from .base import TTSEngine, TTSJob, TTSResult, main
 
 log = logging.getLogger("dubber.tts.openvoice")
 
-CKPT = config.ROOT / "models" / "openvoice"
+CKPT = config.MODELS_DIR / "openvoice"
 # our code -> (Melo language, Melo speaker key, base-speaker SE file)
 MELO = {"en": ("EN", "EN-US", "en-us"), "es": ("ES", "ES", "es"), "fr": ("FR", "FR", "fr"),
         "zh": ("ZH", "ZH", "zh"), "ja": ("JP", "JP", "jp"), "ko": ("KR", "KR", "kr")}
