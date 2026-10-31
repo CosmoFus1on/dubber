@@ -59,18 +59,22 @@ def prosody_hints(project: Project, work: Path) -> dict[int, dict]:
         db, swing, rise = feat[s.id]
         text = (s.text or "").strip()
         loud = db - med.get(s.speaker, db)                      # dB above the speaker's usual level
-        exag = 0.5 + loud / 24.0 + min(swing, 6.0) / 30.0      # louder and more dynamic -> more emotion
-        if rise > 2.0 or text.endswith(("?", "？")):
-            exag += 0.15                                       # questions: lift the contour
-        if text.endswith(("!", "！")) or loud > 4.0:
-            exag += 0.2                                        # exclamations and shouts
+        exag = 0.5 + loud / 24.0 + min(swing, 6.0) / 60.0      # louder and more dynamic -> more emotion
+        question = rise > 2.0 or text.endswith(("?", "？"))
+        shout = text.endswith(("!", "！")) or loud > 4.0
+        exag += 0.1 if question else 0.0
+        exag += 0.15 if shout else 0.0
         rate = len(text) / max(s.duration, 0.2)
         fast = rate / config.cps(src)
-        cfg = 0.5 - (fast - 1.0) * 0.2 - (0.1 if exag > 0.7 else 0.0)   # faster or emphatic -> lower cfg
+        cfg = 0.5 - (fast - 1.0) * 0.1 - (0.1 if (question or shout) else 0.0)
+        # Measured on the demo clip: exaggeration >= 0.8 or cfg < 0.4 makes Chatterbox drag and babble on
+        # short lines (7 truncations vs 1), so both are capped. Very short lines get neutral settings.
+        if len(text) < 12:
+            exag, cfg = 0.5, 0.5
         # coarse steps: the speaker median shifts a little whenever a segment changes, and that must not
         # invalidate every other segment's tts_key
-        hints[s.id] = {"exaggeration": round(float(np.clip(exag, 0.3, 0.9)), 1),
-                       "cfg_weight": round(float(np.clip(cfg, 0.2, 0.6)), 1)}
+        hints[s.id] = {"exaggeration": round(float(np.clip(exag, 0.3, 0.7)), 1),
+                       "cfg_weight": round(float(np.clip(cfg, 0.4, 0.6)), 1)}
     return hints
 
 
@@ -99,10 +103,24 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
         log.info("engine %s: %d segments", engine, len(jobs))
         results = {r.id: r for r in run_engine(engine, jobs, opts.device)}
         # Engines babble on very short text now and then; one retry fixes most of it.
-        retry = [j for j in jobs if _babbled(results.get(j.id), j)]
-        if retry:
-            log.info("engine %s: re-synthesizing %d implausibly slow clip(s)", engine, len(retry))
-            results.update({r.id: r for r in run_engine(engine, retry, opts.device)})
+        # Babble (a clip far longer than its text) is sampling variance, worst on short lines: retry with
+        # neutral prosody up to BABBLE_RETRIES times and keep the shortest take.
+        for attempt in range(config.BABBLE_RETRIES):
+            retry = [j for j in jobs if _babbled(results.get(j.id), j)]
+            if not retry:
+                break
+            log.info("engine %s: re-synthesizing %d implausibly slow clip(s), take %d", engine, len(retry), attempt + 2)
+            best = {j.id: (audio.duration(j.out_wav), Path(j.out_wav).read_bytes()) for j in retry}
+            for j in retry:
+                j.exaggeration, j.cfg_weight = 0.5, 0.5
+            for r in run_engine(engine, retry, opts.device):
+                if r.wav and Path(r.wav).exists():
+                    d = trim_silence(Path(r.wav))
+                    if d < best[r.id][0]:
+                        best[r.id] = (d, Path(r.wav).read_bytes())
+                    results[r.id] = r
+            for j in retry:  # restore the shortest take
+                Path(j.out_wav).write_bytes(best[j.id][1])
         still = []
         for s in pending:
             r = results.get(str(s.id))
@@ -135,7 +153,7 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
         s.flag(F_TTS_FAILED)
 
 
-def trim_silence(wav: Path, top_db: float = 35.0, keep_s: float = 0.05) -> float:
+def trim_silence(wav: Path, top_db: float = config.TRIM_DB, keep_s: float = 0.05) -> float:
     """Trim leading/trailing silence in place (keeping a short margin). Returns the new duration."""
     import librosa
     x, sr = audio.read(wav)

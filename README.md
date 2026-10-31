@@ -207,8 +207,10 @@ when lines need shortening, because every shortened line is re-judged and re-syn
 - **No lip sync.** Timing is per sentence, not per mouth movement.
 - **Overlapping speech** is kept and both dubs are mixed, but Whisper only transcribes the dominant
   voice, so the quieter speaker's words are usually lost.
-- **Speed.** Roughly 5–10 minutes per minute of video on this GPU with the free LLM routes I had.
-  Adding provider keys to FreeLLMAPI is the single biggest speed-up.
+- **Speed.** Roughly 5–8 minutes per minute of video on this GPU with the free LLM routes I had
+  (the 78 s demo recording went from 1705 s to about 590 s after running LLM calls four at a time
+  and keeping the TTS engine warm between calls). Adding provider keys to FreeLLMAPI is still the
+  single biggest speed-up left.
 - **Reference clips need 10 s of clean speech per speaker.** Under about 3 s the clone degrades
   noticeably; under 1 s the speaker is flagged `no_ref_clip`.
 - **torchcodec** does not load against a static ffmpeg build, which is why the XTTS and F5
@@ -263,9 +265,10 @@ Generated and hidden: `.venv/` (main env), `.envs/<engine>/` (TTS engine envs), 
 
 A hosted Gradio demo on a Hugging Face Space (free accounts older than 30 days can host two
 ZeroGPU Spaces; if mine does not qualify, there will be a video and no Space, and I will say so
-here). The demo video at the top. Per-language syllable counting instead of characters per second.
-A persistent TTS worker so Chatterbox is not reloaded on every call. And someone fluent in Malay,
-Japanese and Mandarin to tell me what the LLM judge is missing.
+here). Per-language syllable counting instead of characters per second. Better emotion transfer than
+the current pitch/loudness/punctuation hints (an emotion classifier on the original line, or
+reference clips picked per mood). And someone fluent in Malay, Japanese and Mandarin to tell me what
+the LLM judge is missing.
 
 ## Licence
 

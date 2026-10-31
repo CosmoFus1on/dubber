@@ -109,7 +109,9 @@ SHORTEN_ROUNDS = 2
 STRETCH_SOFT = 1.15
 STRETCH_HARD = 1.25
 SPILL_MAX_S = 0.5               # a clip may run this far into the silence after its slot, never into the next segment
-BABBLE_RATIO = 1.6              # TTS clip longer than text-length-implies * this -> re-synthesize once
+BABBLE_RATIO = 1.6              # TTS clip longer than text-length-implies * this -> re-synthesize
+BABBLE_RETRIES = 3              # extra takes with neutral prosody; the shortest one is kept
+TRIM_DB = 28.0                  # edge-silence trim; Chatterbox leaves breath/noise around -30 dB after short lines
 FADE_MS = 40
 
 # ---- mix ----
