@@ -18,31 +18,59 @@ from .tts.base import TTSJob, chain_for, run_engine
 log = logging.getLogger("dubber.synth")
 
 
+def pitch_rise(seg: np.ndarray, sr: int) -> float:
+    """Pitch at the end of the line vs. the rest, in semitones (rising = a question-like contour)."""
+    import librosa
+    if len(seg) < sr // 4:
+        return 0.0
+    f0 = librosa.yin(seg.astype(np.float32), fmin=60, fmax=400, sr=sr, frame_length=1024, hop_length=256)
+    f0 = f0[(f0 > 60) & (f0 < 400)]
+    if len(f0) < 8:
+        return 0.0
+    k = max(2, len(f0) // 4)
+    return float(12 * np.log2(np.median(f0[-k:]) / np.median(f0[:-k])))
+
+
 def prosody_hints(project: Project, work: Path) -> dict[int, dict]:
-    """Per-segment {exaggeration, cfg_weight} from the vocals stem. ponytail: linear maps; a learned mapping is the upgrade."""
+    """Per-segment {exaggeration, cfg_weight} for the engine.
+
+    exaggeration (emotion intensity) rises with: loudness above the speaker's usual level, loudness swings
+    inside the line, a rising pitch at the end, and '?'/'!' in the text. cfg_weight (pacing/adherence) drops
+    for fast or emphatic lines so delivery gets livelier. ponytail: hand-tuned linear maps; a learned mapping
+    (or an emotion classifier on the original line) is the upgrade."""
     hints = {}
     try:
         x, sr = audio.read(work / "stems" / "vocals.wav", sr=16000, mono=True)
     except Exception:
         return {s.id: {"exaggeration": 0.5, "cfg_weight": 0.5} for s in project.segments}
     per_speaker: dict[str, list[float]] = {}
-    rms = {}
+    feat = {}
     for s in project.speech():
-        a, b = int(s.start * sr), int(s.end * sr)
-        seg = x[a:b]
+        seg = x[int(s.start * sr):int(s.end * sr)]
         db = audio.rms_db(seg) if len(seg) else -60.0
-        rms[s.id] = db
+        hop = sr // 20
+        frames = [audio.rms_db(seg[i:i + hop]) for i in range(0, max(0, len(seg) - hop), hop)] if len(seg) > hop else [db]
+        swing = float(np.std([f for f in frames if f > -50])) if len(frames) > 2 else 0.0   # dB spread of the loud frames
+        feat[s.id] = (db, swing, pitch_rise(seg, sr))
         per_speaker.setdefault(s.speaker, []).append(db)
     med = {k: float(np.median(v)) for k, v in per_speaker.items()}
+    src = project.source.get("language") or "en"
     for s in project.speech():
-        loud = rms[s.id] - med.get(s.speaker, rms[s.id])          # dB above the speaker's usual level
-        exag = float(np.clip(0.5 + loud / 24.0, 0.3, 0.8))
-        rate = len(s.text) / max(s.duration, 0.2)                 # chars/s in the source language
-        fast = rate / config.cps(project.source.get("language") or "en")
-        cfg = float(np.clip(0.5 - (fast - 1.0) * 0.2, 0.3, 0.6))  # faster original -> lower cfg (quicker delivery)
+        db, swing, rise = feat[s.id]
+        text = (s.text or "").strip()
+        loud = db - med.get(s.speaker, db)                      # dB above the speaker's usual level
+        exag = 0.5 + loud / 24.0 + min(swing, 6.0) / 30.0      # louder and more dynamic -> more emotion
+        if rise > 2.0 or text.endswith(("?", "？")):
+            exag += 0.15                                       # questions: lift the contour
+        if text.endswith(("!", "！")) or loud > 4.0:
+            exag += 0.2                                        # exclamations and shouts
+        rate = len(text) / max(s.duration, 0.2)
+        fast = rate / config.cps(src)
+        cfg = 0.5 - (fast - 1.0) * 0.2 - (0.1 if exag > 0.7 else 0.0)   # faster or emphatic -> lower cfg
         # coarse steps: the speaker median shifts a little whenever a segment changes, and that must not
         # invalidate every other segment's tts_key
-        hints[s.id] = {"exaggeration": round(exag, 1), "cfg_weight": round(cfg, 1)}
+        hints[s.id] = {"exaggeration": round(float(np.clip(exag, 0.3, 0.9)), 1),
+                       "cfg_weight": round(float(np.clip(cfg, 0.2, 0.6)), 1)}
     return hints
 
 

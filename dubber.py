@@ -134,6 +134,8 @@ def main(argv=None) -> int:
         log.info("[%s] done in %.1fs", stage, secs)
 
     project.save(seg_path)
+    from dubber.tts.base import stop_workers
+    stop_workers()  # release the warm TTS engine and its VRAM
     report.write(project, work, opts, state)
     if project.segments:
         print(f"transcript: {report.write_transcript(project, opts)}")

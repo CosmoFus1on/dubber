@@ -46,6 +46,7 @@ LLM_FAST_FALLBACK = ["nemotron-3-super-120b", "auto", "qwen3.8-27b"]
 LLM_TEMPERATURE = 0.3
 LLM_BACKOFF_S = [1, 2, 4, 8, 16]
 LLM_TIMEOUT_S = 120
+LLM_PARALLEL = 4                # concurrent translate windows / verify calls (free tiers throttle above this)
 CACHE_DIR = Path(os.environ.get("DUBBER_CACHE", Path.home() / ".cache" / "dubber"))
 
 # ---- models ----

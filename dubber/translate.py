@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import logging
 import math
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +21,16 @@ from .schema import F_VERIFY_FAILED, SPEECH, Project, Segment, Verify, sha1
 log = logging.getLogger("dubber.translate")
 
 _embedder = None
+_embedder_lock = threading.Lock()
+
+
+def pmap(fn, items):
+    """Run fn over items with config.LLM_PARALLEL threads, preserving order. One item's error propagates."""
+    items = list(items)
+    if len(items) <= 1 or config.LLM_PARALLEL <= 1:
+        return [fn(x) for x in items]
+    with ThreadPoolExecutor(max_workers=config.LLM_PARALLEL) as ex:
+        return list(ex.map(fn, items))
 
 
 def load_glossary(path: Optional[Path]) -> dict[str, str]:
@@ -69,10 +81,11 @@ def shorten(llm: LLMProvider, seg: Segment, src: str, tgt: str, target_chars: in
 
 def _embed_sim(a: str, b: str) -> float:
     global _embedder
-    if _embedder is None:
-        from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer(config.EMBEDDER, device="cpu")  # small; keep VRAM for the big models
-    v = _embedder.encode([a, b], normalize_embeddings=True)
+    with _embedder_lock:
+        if _embedder is None:
+            from sentence_transformers import SentenceTransformer
+            _embedder = SentenceTransformer(config.EMBEDDER, device="cpu")  # small; keep VRAM for the big models
+        v = _embedder.encode([a, b], normalize_embeddings=True)
     return float(v[0] @ v[1])
 
 
@@ -128,29 +141,34 @@ class Translator:
                 out[i] = t
         return out
 
+    def _window(self, window: list[Segment]) -> dict[int, str]:
+        got = self.translate_batch(window)
+        for s in [s for s in window if s.id not in got]:  # one more try alone, then leave untranslated + flagged
+            got.update(self.translate_batch([s]))
+        for s in window:  # models often overshoot max_chars; a text-only shorten here is far cheaper than re-synthesis
+            t = got.get(s.id)
+            if t and s.budget_chars and len(t) > s.budget_chars * config.PRESHORTEN_OVER:
+                s.translation = t
+                new = shorten(self.llm, s, self.src, self.tgt, s.budget_chars)
+                if new:
+                    log.info("segment %d: pre-shortened %d -> %d chars (budget %d)", s.id, len(t), len(new), s.budget_chars)
+                    got[s.id] = new
+        return got
+
     def translate_all(self, todo: list[Segment], save) -> None:
-        for i in range(0, len(todo), config.TRANSLATE_WINDOW):
-            window = todo[i:i + config.TRANSLATE_WINDOW]
-            got = self.translate_batch(window)
-            missing = [s for s in window if s.id not in got]
-            for s in missing:  # one more try alone, then leave untranslated + flagged
-                got.update(self.translate_batch([s]))
+        windows = [todo[i:i + config.TRANSLATE_WINDOW] for i in range(0, len(todo), config.TRANSLATE_WINDOW)]
+        for window, got in zip(windows, pmap(self._window, windows)):  # windows are independent: run them concurrently
             for s in window:
                 if s.id in got:
                     s.translation = got[s.id]
-                    # models often overshoot max_chars; a text-only shorten here is far cheaper than re-synthesis
-                    if s.budget_chars and len(s.translation) > s.budget_chars * config.PRESHORTEN_OVER:
-                        new = shorten(self.llm, s, self.src, self.tgt, s.budget_chars)
-                        if new:
-                            log.info("segment %d: pre-shortened %d -> %d chars (budget %d)", s.id, len(s.translation), len(new), s.budget_chars)
-                            s.translation = new
                     s.extra["translate_key"] = self.key(s)
                     s.verify = Verify()
                     s.unflag_prefix(F_VERIFY_FAILED)
                 else:
                     log.error("segment %d: no translation returned", s.id)
                     s.flag(F_VERIFY_FAILED)
-            log.info("translated %d/%d", min(i + len(window), len(todo)), len(todo))
+        if todo:
+            log.info("translated %d/%d", sum(1 for s in todo if s.translation), len(todo))
             save()
 
     # ---- verification -----------------------------------------------------------------------
@@ -231,10 +249,7 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
     tr.translate_all(todo, save)
     pending = [s for s in project.sorted_segments()
                if s.type == SPEECH and s.translation and s.verify.passed is None and s.verify.attempts != -1]
-    for n, s in enumerate(pending, 1):
-        tr.verify(s)
-        if n % 10 == 0:
-            save()
+    pmap(tr.verify, pending)  # each verify is independent; the free tiers, not the code, set the parallelism
     save()
     passed = sum(1 for s in project.speech() if s.verify.passed or s.verify.attempts == -1)
     log.info("verification: %d/%d passed, %d flagged, %d LLM calls", passed, len(project.speech()),

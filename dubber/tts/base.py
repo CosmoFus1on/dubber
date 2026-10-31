@@ -9,6 +9,7 @@ its dependency pins conflict with the main venv); otherwise it runs in-process.
 """
 from __future__ import annotations
 
+import atexit
 import importlib
 import importlib.util
 import json
@@ -16,7 +17,6 @@ import logging
 import os
 import subprocess
 import sys
-import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -61,6 +61,7 @@ class TTSEngine(ABC):
     name: str = ""
     languages: frozenset = frozenset()
     clones: bool = True
+    keep_loaded: bool = False   # set by --serve: synth() may cache its model on self between calls
 
     def supports(self, lang: str) -> bool:
         return norm_lang(lang) in self.languages
@@ -104,6 +105,41 @@ def chain_for(lang: str, cpu: bool = False) -> list[str]:
     return [e for e in chain if available(e)]
 
 
+_workers: dict[str, subprocess.Popen] = {}   # one warm engine process per engine name, see _worker()
+
+
+def _spawn(name: str, py: Path) -> subprocess.Popen:
+    env = dict(os.environ, PYTHONPATH=str(config.ROOT), PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
+    return subprocess.Popen([str(py), "-m", ENGINE_MODULES[name], "--serve"], cwd=str(config.ROOT), env=env,
+                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, encoding="utf-8",
+                            errors="replace", bufsize=1)
+
+
+def _worker(name: str, py: Path) -> subprocess.Popen:
+    """A warm engine process: the model loads once and serves every later call (Chatterbox: ~25 s saved per call).
+    Only one engine stays resident, so VRAM never holds two TTS models."""
+    w = _workers.get(name)
+    if w is not None and w.poll() is None:
+        return w
+    stop_workers()
+    if not _workers and not getattr(stop_workers, "_registered", False):
+        atexit.register(stop_workers)
+        stop_workers._registered = True  # type: ignore[attr-defined]
+    _workers[name] = _spawn(name, py)
+    return _workers[name]
+
+
+def stop_workers() -> None:
+    for name, w in list(_workers.items()):
+        try:
+            if w.poll() is None:
+                w.stdin.close()
+                w.wait(timeout=10)
+        except Exception:
+            w.kill()
+        _workers.pop(name, None)
+
+
 def run_engine(name: str, jobs: list[TTSJob], device: str) -> list[TTSResult]:
     """Run jobs on one engine, in its own venv when present. Returns one result per job, in order."""
     if not jobs:
@@ -112,24 +148,39 @@ def run_engine(name: str, jobs: list[TTSJob], device: str) -> list[TTSResult]:
     if py is None:
         mod = importlib.import_module(ENGINE_MODULES[name])
         return mod.ENGINE.synth(jobs, device)
-    with tempfile.TemporaryDirectory(prefix="dubber_tts_") as td:
-        jobs_path, out_path = Path(td) / "jobs.json", Path(td) / "out.json"
-        jobs_path.write_text(json.dumps({"device": device, "jobs": [asdict(j) for j in jobs]}, ensure_ascii=False),
-                             encoding="utf-8")
-        env = dict(os.environ, PYTHONPATH=str(config.ROOT), PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
-        proc = subprocess.run([str(py), "-m", ENGINE_MODULES[name], str(jobs_path), str(out_path)],
-                              cwd=str(config.ROOT), env=env, capture_output=True, text=True, encoding="utf-8",
-                              errors="replace")
-        if proc.returncode != 0 or not out_path.exists():
-            tail = (proc.stderr or "")[-2000:]
-            log.error("engine %s subprocess failed (rc=%s):\n%s", name, proc.returncode, tail)
-            return [TTSResult(j.id, None, name, f"subprocess rc={proc.returncode}: {tail[-300:]}") for j in jobs]
-        results = json.loads(out_path.read_text(encoding="utf-8"))
-        return [TTSResult(**r) for r in results]
+    spec = json.dumps({"device": device, "jobs": [asdict(j) for j in jobs]}, ensure_ascii=False)
+    for attempt in (1, 2):  # a crashed worker gets one fresh process
+        w = _worker(name, py)
+        try:
+            w.stdin.write(spec + "\n")
+            w.stdin.flush()
+            line = w.stdout.readline()
+        except (OSError, ValueError):
+            line = ""
+        if line:
+            return [TTSResult(**r) for r in json.loads(line)]
+        rc = w.poll()
+        log.error("engine %s worker died (rc=%s) on attempt %d", name, rc, attempt)
+        _workers.pop(name, None)
+    return [TTSResult(j.id, None, name, "engine worker died; see its stderr above") for j in jobs]
 
 
 def main(engine: TTSEngine) -> None:
-    """CLI entry used by run_engine: python -m dubber.tts.<name> jobs.json out.json"""
+    """CLI entry used by run_engine.
+    --serve:            read one JSON batch per stdin line, answer one JSON line on stdout, keep the model loaded.
+    jobs.json out.json: one-shot file mode (benchmarks, smoke tests)."""
+    if sys.argv[1:2] == ["--serve"]:
+        out = sys.stdout
+        sys.stdout = sys.stderr   # anything a library prints must not corrupt the protocol
+        engine.keep_loaded = True
+        for line in sys.stdin:
+            if not line.strip():
+                continue
+            spec = json.loads(line)
+            results = engine.synth([TTSJob(**j) for j in spec["jobs"]], spec.get("device", "cpu"))
+            out.write(json.dumps([asdict(r) for r in results], ensure_ascii=False) + "\n")
+            out.flush()
+        return
     jobs_path, out_path = Path(sys.argv[1]), Path(sys.argv[2])
     spec = json.loads(jobs_path.read_text(encoding="utf-8"))
     jobs = [TTSJob(**j) for j in spec["jobs"]]

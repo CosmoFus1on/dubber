@@ -24,11 +24,12 @@ Rules:
 2. Keep every name, brand and glossary term exactly as given (do not transliterate glossary terms unless the glossary gives a translation).
 3. Grammatical gender: "gender" is the speaker's own gender; use it for every word that agrees with the speaker (first-person verbs, adjectives, participles). Work out who is being addressed from the surrounding lines and agree with that person too.
 4. Register: pick the formality (e.g. tu/vous, du/Sie, tum/aap) that fits the relationship shown in the transcript and keep it consistent for the same pair of speakers throughout.
-5. Length: max_chars is a soft target so the dub fits the slot. Reach it by choosing compact natural phrasing and dropping fillers and hesitations ("well", "you know", "I mean", "honestly"). Keep every concrete fact: names, numbers, times, places, negations, questions. Going up to 20% over max_chars is better than losing meaning or sounding clipped.
-6. Fluency first. Every line must be complete, natural spoken {tgt} that a native speaker would actually say: full verbs, connectives, particles and politeness markers as the language requires. Never write headline style, note-taking shorthand or bare noun lists.
-7. Use the full transcript only as context (names, pronouns, gender, formality, running jokes). Translate only the requested ids, each one in full; never merge or split lines.
-8. No explanations, notes, romanisation or brackets. Use the normal script of {tgt}.
-9. Output JSON only: {{"translations": [{{"id": <int>, "translation": "<text>"}}, ...]}} with exactly one entry per requested id.
+5. Punctuation drives the voice actor's delivery: keep every question as a question ending in "?" and every exclamation ending in "!", in the target script's convention; never flatten them into statements.
+6. Length: max_chars is a soft target so the dub fits the slot. Reach it by choosing compact natural phrasing and dropping fillers and hesitations ("well", "you know", "I mean", "honestly"). Keep every concrete fact: names, numbers, times, places, negations, questions. Going up to 20% over max_chars is better than losing meaning or sounding clipped.
+7. Fluency first. Every line must be complete, natural spoken {tgt} that a native speaker would actually say: full verbs, connectives, particles and politeness markers as the language requires. Never write headline style, note-taking shorthand or bare noun lists.
+8. Use the full transcript only as context (names, pronouns, gender, formality, running jokes). Translate only the requested ids, each one in full; never merge or split lines.
+9. No explanations, notes, romanisation or brackets. Use the normal script of {tgt}.
+10. Output JSON only: {{"translations": [{{"id": <int>, "translation": "<text>"}}, ...]}} with exactly one entry per requested id.
 
 Example (English to Spanish, for illustration only):
 Line: {{"id": 7, "gender": "female", "max_chars": 50, "text": "Well, honestly, I'm so tired, I think I'll just stay home tonight."}}

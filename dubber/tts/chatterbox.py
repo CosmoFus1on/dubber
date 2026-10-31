@@ -33,10 +33,14 @@ class Chatterbox(TTSEngine):
 
         if device == "cuda" and not torch.cuda.is_available():
             device = "cpu"
-        try:
-            model = ChatterboxMultilingualTTS.from_pretrained(device=device, t3_model="v3")
-        except TypeError:  # older package without the v3 switch
-            model = ChatterboxMultilingualTTS.from_pretrained(device=device)
+        model = getattr(self, "_model", None)
+        if model is None:
+            try:
+                model = ChatterboxMultilingualTTS.from_pretrained(device=device, t3_model="v3")
+            except TypeError:  # older package without the v3 switch
+                model = ChatterboxMultilingualTTS.from_pretrained(device=device)
+            if self.keep_loaded:
+                self._model = model   # warm worker: ~25 s load paid once per run
         # ponytail: torch.load on this checkpoint is fine on CPU too, just slow (~10x realtime)
         results = []
         for j in jobs:
@@ -48,9 +52,10 @@ class Chatterbox(TTSEngine):
             except Exception as e:  # never let one segment kill the batch
                 log.exception("chatterbox failed on job %s", j.id)
                 results.append(TTSResult(j.id, None, self.name, f"{type(e).__name__}: {e}"))
-        del model
-        if device == "cuda":
-            torch.cuda.empty_cache()
+        if not self.keep_loaded:
+            del model
+            if device == "cuda":
+                torch.cuda.empty_cache()
         return results
 
 

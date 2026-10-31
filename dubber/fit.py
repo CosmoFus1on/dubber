@@ -16,7 +16,7 @@ import numpy as np
 from . import audio, config, ffmpeg, synth
 from .llm import default_provider
 from .schema import F_STRETCH_15, F_TRUNCATED, SPEECH, Project, Segment, Verify, sha1
-from .translate import Translator, hand_edited, shorten
+from .translate import Translator, hand_edited, pmap, shorten
 
 log = logging.getLogger("dubber.fit")
 
@@ -84,35 +84,38 @@ def shorten_rounds(project: Project, todo: list[Segment], work: Path, opts: conf
     except Exception:  # verification after a shorten is best-effort
         translator = None
     src_lang = config.norm_lang(project.source.get("language") or "en")
+    def attempt(s: Segment, rnd: int) -> bool:
+        """Shorten one over-long line and judge it (LLM only, no TTS). True when the line changed."""
+        allowed, raw = allowed_length(project, s), audio.duration(work / s.tts.wav)
+        if raw <= allowed:
+            return False
+        target = max(4, math.floor(len(s.translation) * allowed / raw))
+        new = shorten(llm, s, src_lang, opts.target, target)
+        if not new:
+            return False
+        prev = (s.translation, s.verify, list(s.flags))
+        s.translation, s.verify = new, Verify()
+        # judge the shorter line BEFORE spending TTS on it; never let verify re-translate here (that
+        # would desync audio and text). A rejected shortening is simply reverted, flags included.
+        if translator is not None and not translator.verify(s, retranslate=False):
+            log.info("segment %d round %d: shortened line rejected by the judge (%s); keeping previous",
+                     s.id, rnd, s.verify.issue)
+            s.translation, s.verify, s.flags = prev
+            s.extra["shorten_rejected"] = s.verify.issue or "judge rejected the shorter line"
+            return False
+        log.info("segment %d round %d: shortened %d -> %d chars (raw %.2fs > allowed %.2fs)",
+                 s.id, rnd, len(prev[0]), len(new), raw, allowed)
+        s.tts.shorten_rounds = rnd
+        return True
+
     for rnd in range(1, max_rounds + 1):
-        changed = []
-        for s in todo:
-            if hand_edited(s) or not s.translation or not s.tts.wav:
-                continue  # a human's text is never shortened; it goes to tempo/truncate
-            allowed, raw = allowed_length(project, s), audio.duration(work / s.tts.wav)
-            if raw <= allowed:
-                continue
-            target = max(4, math.floor(len(s.translation) * allowed / raw))
-            new = shorten(llm, s, src_lang, opts.target, target)
-            if not new:
-                continue
-            prev = (s.translation, s.verify, list(s.flags))
-            s.translation, s.verify = new, Verify()
-            # judge the shorter line BEFORE spending TTS on it; never let verify re-translate here (that
-            # would desync audio and text). A rejected shortening is simply reverted, flags included.
-            if translator is not None and not translator.verify(s, retranslate=False):
-                log.info("segment %d round %d: shortened line rejected by the judge (%s); keeping previous",
-                         s.id, rnd, s.verify.issue)
-                s.translation, s.verify, s.flags = prev
-                s.extra["shorten_rejected"] = s.verify.issue or "judge rejected the shorter line"
-                continue
-            log.info("segment %d round %d: shortened %d -> %d chars (raw %.2fs > allowed %.2fs)",
-                     s.id, rnd, len(prev[0]), len(new), raw, allowed)
-            s.tts.shorten_rounds = rnd
-            changed.append(s)
+        # a human's text is never shortened; it goes to tempo/truncate
+        candidates = [s for s in todo if not hand_edited(s) and s.translation and s.tts.wav]
+        flags = pmap(lambda s: attempt(s, rnd), candidates)   # LLM-bound: run the attempts concurrently
+        changed = [s for s, ok in zip(candidates, flags) if ok]
         if not changed:
             return
-        synth.synthesize(changed, project, work, opts)
+        synth.synthesize(changed, project, work, opts)   # one engine call for the whole round
         project.save(work / "segments.json")
 
 

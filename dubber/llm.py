@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -72,6 +73,7 @@ class OpenAICompatible(LLMProvider):
         self.backoff = list(backoff)
         self.timeout = timeout
         self.calls = 0  # network calls actually made (cache misses)
+        self._lock = threading.Lock()  # chat() is called from a thread pool
 
     def _headers(self) -> dict:
         h = {"Content-Type": "application/json"}
@@ -135,8 +137,9 @@ class OpenAICompatible(LLMProvider):
                 if m in dead:
                     continue
                 try:
-                    self.calls += 1
-                    STATS["calls"] += 1
+                    with self._lock:
+                        self.calls += 1
+                        STATS["calls"] += 1
                     content, via = self._post(m, messages, json_mode, temperature, max_tokens)
                     if not content:
                         raise LLMError(f"{m}: empty content", retryable=True)
