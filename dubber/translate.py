@@ -212,6 +212,11 @@ class Translator:
 
 def run(project: Project, work: Path, opts: config.Options) -> None:
     tr = Translator(project, opts)
+    try:  # preflight: a dead proxy should stop the stage, not flag every segment after an hour of retries
+        tr.llm.models()
+    except Exception as e:
+        raise RuntimeError(f"LLM endpoint {config.LLM_BASE_URL} is unreachable ({e}). Start FreeLLMAPI and rerun; "
+                           f"stages 0-2 are cached.") from e
     path = work / "segments.json"
     save = lambda: project.save(path)  # noqa: E731
     for s in project.segments:

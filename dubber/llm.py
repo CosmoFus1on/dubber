@@ -103,6 +103,11 @@ class OpenAICompatible(LLMProvider):
             raise LLMError(f"{model}: HTTP {e.code} {detail}", retryable=e.code in (429, 413) or e.code >= 500,
                            status=e.code)
         except (urllib.error.URLError, TimeoutError, OSError) as e:
+            reason = getattr(e, "reason", e)
+            if isinstance(reason, ConnectionRefusedError) or "10061" in str(e) or "Connection refused" in str(e):
+                # the proxy itself is down: no model in the chain can help, so stop at once
+                raise LLMError(f"LLM endpoint {self.base_url} refused the connection (is FreeLLMAPI running?)",
+                               retryable=False, status=-1)
             raise LLMError(f"{model}: {type(e).__name__}: {e}", retryable=True)
         try:
             content = data["choices"][0]["message"]["content"] or ""
@@ -147,6 +152,8 @@ class OpenAICompatible(LLMProvider):
                     return content
                 except LLMError as e:
                     last = e
+                    if e.status == -1:
+                        raise
                     if not e.retryable:
                         dead.add(m)
                     log.info("llm round %d on %s failed: %s", attempt + 1, m, str(e)[:160])
