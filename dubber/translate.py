@@ -230,11 +230,6 @@ class Translator:
 
 def run(project: Project, work: Path, opts: config.Options) -> None:
     tr = Translator(project, opts)
-    try:  # preflight: a dead proxy should stop the stage, not flag every segment after an hour of retries
-        tr.llm.models()
-    except Exception as e:
-        raise RuntimeError(f"LLM endpoint {config.LLM_BASE_URL} is unreachable ({e}). Start FreeLLMAPI and rerun; "
-                           f"stages 0-2 are cached.") from e
     path = work / "segments.json"
     save = lambda: project.save(path)  # noqa: E731
     for s in project.segments:
@@ -245,11 +240,17 @@ def run(project: Project, work: Path, opts: config.Options) -> None:
                 s.translation, s.tts = None, type(s.tts)()
                 s.verify = Verify()
     todo = [s for s in project.sorted_segments() if tr.needs(s)]
+    needs_verify = lambda: [s for s in project.sorted_segments()  # noqa: E731
+                            if s.type == SPEECH and s.translation and s.verify.passed is None and s.verify.attempts != -1]
+    if todo or needs_verify():
+        try:  # preflight: a dead proxy should stop the stage, not flag every segment after an hour of retries
+            tr.llm.models()
+        except Exception as e:
+            raise RuntimeError(f"LLM endpoint {config.LLM_BASE_URL} is unreachable ({e}). Start FreeLLMAPI and "
+                               f"rerun; stages 0-2 are cached.") from e
     log.info("translate %s -> %s with %s: %d segments to translate", tr.src, tr.tgt, tr.model, len(todo))
     tr.translate_all(todo, save)
-    pending = [s for s in project.sorted_segments()
-               if s.type == SPEECH and s.translation and s.verify.passed is None and s.verify.attempts != -1]
-    pmap(tr.verify, pending)  # each verify is independent; the free tiers, not the code, set the parallelism
+    pmap(tr.verify, needs_verify())  # each verify is independent; the free tiers, not the code, set the parallelism
     save()
     passed = sum(1 for s in project.speech() if s.verify.passed or s.verify.attempts == -1)
     log.info("verification: %d/%d passed, %d flagged, %d LLM calls", passed, len(project.speech()),
