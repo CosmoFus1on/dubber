@@ -112,6 +112,12 @@ SPILL_MAX_S = 0.5               # a clip may run this far into the silence after
 BABBLE_RATIO = 1.6              # TTS clip longer than text-length-implies * this -> re-synthesize
 BABBLE_RETRIES = 3              # extra takes with neutral prosody; the shortest one is kept
 TRIM_DB = 28.0                  # edge-silence trim; Chatterbox leaves breath/noise around -30 dB after short lines
+# Reference clips are in the source language. Chatterbox's README: a mismatched reference makes the output
+# inherit the reference accent; "to mitigate this, set cfg_weight to 0". Applied whenever source != target.
+CROSS_LINGUAL_CFG = 0.0
+# Resemble's dedicated single-language fine-tunes (MIT), used instead of the 23-language model when the
+# target matches. Assembled into MODELS_DIR/chatterbox-<lang>/ on first use (see tts/chatterbox.py).
+CHATTERBOX_LANG_PACKS = {"hi": "ResembleAI/Chatterbox-Multilingual-hi"}
 FADE_MS = 40
 
 # ---- mix ----

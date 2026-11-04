@@ -97,7 +97,9 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
             ref = (work / spk.ref_clip) if spk and spk.ref_clip and (work / spk.ref_clip).exists() else None
             if ref is None:
                 s.flag(F_NO_REF)
-            h = hints.get(s.id, {"exaggeration": 0.5, "cfg_weight": 0.5})
+            h = dict(hints.get(s.id, {"exaggeration": 0.5, "cfg_weight": 0.5}))
+            if ref is not None and config.norm_lang(project.source.get("language") or "") != config.norm_lang(opts.target):
+                h["cfg_weight"] = config.CROSS_LINGUAL_CFG   # cross-lingual clone: kill the reference accent
             jobs.append(TTSJob(str(s.id), s.translation, opts.target, str((tts_dir / f"{s.id:05d}.wav").resolve()),
                                ref_wav=str(ref) if ref else None, gender=s.gender, **h))
         log.info("engine %s: %d segments", engine, len(jobs))
@@ -111,8 +113,8 @@ def synthesize(segs: list[Segment], project: Project, work: Path, opts: config.O
                 break
             log.info("engine %s: re-synthesizing %d implausibly slow clip(s), take %d", engine, len(retry), attempt + 2)
             best = {j.id: (audio.duration(j.out_wav), Path(j.out_wav).read_bytes()) for j in retry}
-            for j in retry:
-                j.exaggeration, j.cfg_weight = 0.5, 0.5
+            for j in retry:  # neutral emotion; cfg stays as set (0 for cross-lingual clones)
+                j.exaggeration = 0.5
             for r in run_engine(engine, retry, opts.device):
                 if r.wav and Path(r.wav).exists():
                     d = trim_silence(Path(r.wav))
