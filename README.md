@@ -167,55 +167,89 @@ cosine against the reference clip; Piper does not clone, so its number is just "
 the right gender". Chatterbox's big max errors are two babbles, where it ran several times longer than
 the text; the pipeline detects those and re-synthesises once.
 
-### End-to-end evaluation
+### A real conversation
 
-Two synthetic clips (one speaker, 24 s; two speakers plus a 12 s public-domain song, 44 s) into four
-languages. "Checked by" is honest: Hindi was read by a fluent speaker (me); the other three were
-judged by the LLM only.
+The clip I actually care about is a 78 second coffee-shop conversation between two people who agreed
+to be dubbed. English in, Hindi out, three times over as the pipeline changed:
 
-| clip | lang | checked by | pass rate | mean judge | mean fluency | stretched | truncated | s per video minute |
-|---|---|---|---|---|---|---|---|---|
-| two speakers + song | hi | fluent speaker | 5/5 | 0.94 | 0.96 | 1 | 1 | 616 |
-| two speakers + song | ms | LLM only | 5/5 | 0.97 | 1.00 | 1 | 1 | 377 |
-| two speakers + song | ja | LLM only | 5/5 | 0.97 | 1.00 | 0 | 0 | 284 |
-| two speakers + song | zh | LLM only | 5/5 | 0.94 | 1.00 | 0 | 0 | 302 |
-| one speaker | hi | fluent speaker | 3/3 | 0.95 | 1.00 | 1 | 0 | 590 |
-| one speaker | ms | LLM only | 3/3 | 0.95 | 0.93 | 1 | 0 | 697 |
-| one speaker | ja | LLM only | 3/3 | 0.95 | 1.00 | 0 | 0 | 390 |
-| one speaker | zh | LLM only | 3/3 | 0.95 | 1.00 | 0 | 0 | 405 |
+| | first working run | after the speed work | final, with the accent fix |
+|---|---|---|---|
+| total time | 1705 s | about 590 s | 1392 s |
+| seconds per minute of video | 1311 | about 454 | 1070 |
+| lines that passed verification | 28 of 28 | 28 of 28 | 28 of 28 |
+| mean judge / fluency / similarity | 0.98 / 1.00 / 0.95 | 0.98 / 1.00 / 0.91 | 0.98 / 1.00 / 0.91 |
+| lines tempo-stretched / cut short | 1 / 1 | 1 / 1 | 10 / 2 |
 
-The song section comes out bit-for-bit the original (correlation 0.9997 after loudness
-normalisation), both speakers are found with the right gender, and every dubbed line starts within
-150 ms of the original. The `--cpu` path (distil-whisper + Piper) finishes the 24 s clip in 396 s.
+The middle column is the honest best case: running LLM calls four at a time and keeping the TTS engine
+warm between calls took almost three minutes off every minute of video. The last column is slower for
+two reasons I measured rather than guessed. The free LLM route was simply slower that day (369 s against
+260 s for the exact same calls), and the Hindi fine-tune, run with `cfg_weight=0` to stop the English
+reference accent leaking through, speaks noticeably longer per character, so more lines had to be
+reworded, stretched or cut. Better accent, worse timing. That trade-off is real and I'd rather show it
+than hide it.
 
-Where the time goes, typical 44 s clip on GPU: separation 5 s, transcription 7 s, diarization +
-gender 21 s, translation + verification 35–160 s, TTS 37–50 s, fit 0–320 s, mix 4 s. The LLM stage
-dominates, and it is almost all waiting on free-tier rate limits, not compute. Fit is expensive only
-when lines need shortening, because every shortened line is re-judged and re-synthesised.
+### The synthetic eval set
+
+Two generated clips, one voice and two voices plus a song, into four languages, with the final code.
+"Checked by" is honest: I read the Hindi myself; the other three only an LLM has judged.
+
+| clip | lang | checked by | pass | judge | fluency | similarity | stretched | cut | s / min |
+|---|---|---|---|---|---|---|---|---|---|
+| two speakers + song, 44 s | hi | me | 5/5 | 0.91 | 1.00 | 0.87 | 1 | 0 | 614 |
+| two speakers + song | ms | LLM only | 5/5 | 0.85 | 0.90 | 0.93 | 0 | 0 | 511 |
+| two speakers + song | ja | LLM only | 5/5 | 1.00 | 1.00 | 0.87 | 0 | 0 | 235 |
+| two speakers + song | zh | LLM only | 5/5 | 1.00 | 1.00 | 0.86 | 0 | 0 | 325 |
+| one speaker, 24 s | hi | me | 3/3 | 0.95 | 1.00 | 0.96 | 2 | 1 | 1002 |
+| one speaker | ms | LLM only | 3/3 | 0.90 | 0.93 | 0.93 | 0 | 0 | 835 |
+| one speaker | ja | LLM only | 3/3 | 0.90 | 1.00 | 0.87 | 0 | 0 | 352 |
+| one speaker | zh | LLM only | 3/3 | 1.00 | 1.00 | 0.86 | 0 | 0 | 441 |
+
+Every run found both speakers with the right gender, left the song bit-identical (correlation 0.9997
+after loudness normalisation), and placed every line within 150 ms of where the original was. The
+seconds-per-minute figures on a 24 second clip are dominated by fixed costs, loading models and the
+minimum three LLM round trips, and they swing with how busy the free LLM provider is that hour. On a
+longer video they settle towards the TTS engine's real-time factor. The `--cpu` path (distil-whisper
+plus Piper) does the 24 s clip in 396 s.
+
+Where the time goes on a typical minute of video: separation and transcription under 15 s,
+diarization and gender about 30 s, translation plus verification 2–6 minutes depending on the LLM
+route, TTS 1–4 minutes, and the fit stage anywhere from nothing to several minutes depending on how
+many lines ran long. Almost all of the waiting is on the LLM, not on this machine.
 
 ## Known limitations
 
+- **Accent.** This is the big one, and it is still open. The reference clips are the speakers' own
+  English, and a zero-shot cloner carries the reference's phonetics into the target language, so the
+  first Hindi dubs sounded like an English speaker reading Hindi. Resemble's own advice for this case
+  is `cfg_weight=0`, and their dedicated Hindi fine-tune helps further; both are in. A fluent listener
+  still finds the result unconvincing. The path that removes the English audio from the equation
+  entirely, synthesising from a native Hindi reference and then transferring only the speaker's timbre
+  with OpenVoice, is prototyped and produces clearly better pronunciation at the cost of a weaker
+  resemblance to the speaker. It is not the default yet; I want a human ear to pick the trade-off.
 - **Short English lines into Hindi or Malay.** Those languages need more syllables for the same
-  sentence. A 2.8 s English line sometimes has no fluent Hindi version that fits even at 1.25× tempo.
-  The pipeline then truncates with a fade and flags it, because the alternative (telegraphic Hindi) is
-  worse. Expect one such flag per few minutes of fast dialogue.
-- **Speech rate variance.** Chatterbox's pace swings by almost 2× between runs on short lines. The
-  babble retry catches the worst of it, not all of it.
+  sentence. A 2.8 s English line sometimes has no fluent Hindi version that fits even at 1.25× tempo,
+  and the pipeline then trims it with a fade and flags it, because telegraphic Hindi is worse.
+- **Speech rate variance.** Chatterbox's pace swings by almost 2× between takes on short lines, and
+  occasionally it babbles, turning eleven characters into seven seconds. Babbles are detected and
+  re-rolled up to three times, keeping the shortest take; it catches most of it, not all.
+- **Emotion.** Questions, statements and exclamations come out flatter than the original. The engine
+  only exposes an intensity knob and a pacing knob, which the pipeline now drives from the original
+  line's pitch rise, loudness swings and punctuation. It is a nudge, not acting.
 - **Gender is a heuristic.** Pitch plus a French-trained classifier. A low female voice or a high
   tenor can flip it; when the two signals disagree the result is flagged and only the clone is
   trusted, so the voice is still right even if the label is not.
 - **No lip sync.** Timing is per sentence, not per mouth movement.
 - **Overlapping speech** is kept and both dubs are mixed, but Whisper only transcribes the dominant
   voice, so the quieter speaker's words are usually lost.
-- **Speed.** Roughly 5–8 minutes per minute of video on this GPU with the free LLM routes I had
-  (the 78 s demo recording went from 1705 s to about 590 s after running LLM calls four at a time
-  and keeping the TTS engine warm between calls). Adding provider keys to FreeLLMAPI is still the
-  single biggest speed-up left.
+- **Speed.** Roughly 8–18 minutes per minute of video on this GPU with the free LLM routes I had,
+  and the spread is the provider's, not the code's. Adding provider keys to FreeLLMAPI is the single
+  biggest speed-up left.
 - **Reference clips need 10 s of clean speech per speaker.** Under about 3 s the clone degrades
   noticeably; under 1 s the speaker is flagged `no_ref_clip`.
 - **torchcodec** does not load against a static ffmpeg build, which is why the XTTS and F5
   environments pin torch 2.8.
-- The hosted demo is not here yet; see "What's next".
+- There is no hosted demo. The free ZeroGPU tier does not run the torch version Chatterbox pins, and
+  I did not want to ship a Space that only works with the second-best engine.
 
 ## Ethics note
 
@@ -263,12 +297,13 @@ Generated and hidden: `.venv/` (main env), `.envs/<engine>/` (TTS engine envs), 
 
 ## What's next
 
-A hosted Gradio demo on a Hugging Face Space (free accounts older than 30 days can host two
-ZeroGPU Spaces; if mine does not qualify, there will be a video and no Space, and I will say so
-here). Per-language syllable counting instead of characters per second. Better emotion transfer than
-the current pitch/loudness/punctuation hints (an emotion classifier on the original line, or
-reference clips picked per mood). And someone fluent in Malay, Japanese and Mandarin to tell me what
-the LLM judge is missing.
+Settle the accent question: make the native-reference-plus-timbre-transfer path the default for
+cross-lingual dubs if listeners prefer it, and let people drop in a real recording of a native speaker
+as the reference. Per-language syllable counting instead of characters per second. Better emotion
+transfer than the current pitch, loudness and punctuation hints, probably an emotion classifier on the
+original line or reference clips picked per mood. A hosted demo once an engine with the right accent
+runs on the free GPU tier. And someone fluent in Malay, Japanese and Mandarin to tell me what the LLM
+judge is missing.
 
 ## Licence
 
